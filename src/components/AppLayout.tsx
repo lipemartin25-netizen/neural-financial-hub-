@@ -34,7 +34,7 @@ const AppLayout = () => {
     }
 
     return (
-        <div className="min-h-screen bg-background">
+        <div className="min-h-screen bg-background" style={{ backgroundColor: '#0b0d10', color: '#ebe6da' }}>
             <Sidebar />
             <main className="transition-all duration-300 pl-[80px] lg:pl-[280px]">
                 <motion.div

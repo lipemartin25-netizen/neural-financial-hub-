@@ -28,7 +28,7 @@ const Auth = () => {
     };
 
     return (
-        <div className="flex min-h-screen items-center justify-center bg-background px-6 overflow-hidden relative">
+        <div className="flex min-h-screen items-center justify-center bg-background px-6 overflow-hidden relative" style={{ backgroundColor: '#0b0d10', color: '#ebe6da' }}>
             {/* Background elements */}
             <div className="absolute top-1/4 left-1/4 w-[400px] h-[400px] bg-gold/5 blur-[120px] rounded-full -z-10" />
             <div className="absolute bottom-1/4 right-1/4 w-[300px] h-[300px] bg-gold/5 blur-[100px] rounded-full -z-10" />
