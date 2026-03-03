@@ -21,9 +21,6 @@ const App = () => {
     return (
         <BrowserRouter>
             <Routes>
-                {/* Landing Page */}
-                <Route path="/" element={<Index />} />
-
                 {/* Auth */}
                 <Route path="/login" element={<Auth />} />
                 <Route path="/register" element={<Auth />} />
