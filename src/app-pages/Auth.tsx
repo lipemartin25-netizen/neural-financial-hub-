@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Mail, Lock, Sparkles, ArrowRight, Github, Chrome, ShieldCheck } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 
@@ -35,103 +34,203 @@ const Auth = () => {
     };
 
     return (
-        <div className="flex min-h-screen items-center justify-center bg-background px-6 overflow-hidden relative" style={{ backgroundColor: '#0b0d10', color: '#ebe6da' }}>
-            {/* Background elements */}
-            <div className="absolute top-1/4 left-1/4 w-[400px] h-[400px] bg-gold/5 blur-[120px] rounded-full -z-10" />
-            <div className="absolute bottom-1/4 right-1/4 w-[300px] h-[300px] bg-gold/5 blur-[100px] rounded-full -z-10" />
-
-            <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="w-full max-w-md"
-            >
-                <div className="mb-8 text-center">
-                    <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-gold">
-                        <Sparkles size={24} className="text-background" />
-                    </div>
-                    <h1 className="text-2xl font-bold text-white">Aurum<span className="text-gold">Finance</span></h1>
-                    <p className="mt-2 text-sm text-muted-foreground">
-                        {isLogin ? "Bem-vindo de volta à elite" : "Crie sua conta e comece a evoluir"}
+        <div style={{ display: 'flex', width: '100vw', height: '100vh', backgroundColor: '#0b0d10' }}>
+            {/* Left Panel - Hidden on small screens */}
+            <div className="hidden lg:flex" style={{
+                flex: 1,
+                backgroundColor: '#12151a',
+                backgroundImage: 'linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px)',
+                backgroundSize: '40px 40px',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '40px'
+            }}>
+                <div style={{ textAlign: 'center', maxWidth: 420 }}>
+                    <div style={{
+                        width: 72,
+                        height: 72,
+                        background: 'linear-gradient(135deg, #dfc07a, #9a7d3a)',
+                        borderRadius: 20,
+                        margin: '0 auto 32px'
+                    }}></div>
+                    <h1 style={{ fontSize: 36, fontWeight: 700, fontFamily: 'serif', letterSpacing: '-0.02em', color: '#fff', marginBottom: 16 }}>
+                        Aurum<span style={{ color: '#c9a858' }}>Finance</span>
+                    </h1>
+                    <p style={{ fontSize: 16, color: '#6b7280', lineHeight: 1.6, marginBottom: 48 }}>
+                        Tecnologia financeira de próxima geração.<br />
+                        Segura, inteligente e sofisticada.
                     </p>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                        {[
+                            { value: '256-bit', label: 'Encriptação' },
+                            { value: '99.99%', label: 'Uptime' },
+                            { value: '< 50ms', label: 'Latência' },
+                            { value: 'SOC 2', label: 'Compliance' }
+                        ].map(stat => (
+                            <div key={stat.label} style={{
+                                backgroundColor: 'rgba(0,0,0,0.3)',
+                                border: '1px solid rgba(255,255,255,0.03)',
+                                borderRadius: 16,
+                                padding: '24px',
+                                textAlign: 'center'
+                            }}>
+                                <p style={{ fontSize: 16, fontWeight: 700, color: '#dfc07a', marginBottom: 4 }}>{stat.value}</p>
+                                <p style={{ fontSize: 12, color: '#6b7280' }}>{stat.label}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+
+            {/* Right Panel */}
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: '#07080a', position: 'relative' }}>
+                <div style={{ position: 'absolute', top: 32, left: 32 }}>
+                    <button onClick={() => navigate('/')} style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer', fontSize: 14 }}>
+                        <ArrowLeft size={16} /> Voltar
+                    </button>
                 </div>
 
-                <div className="card-3d p-8">
-                    <form onSubmit={handleAuth} className="space-y-4">
-                        <div>
-                            <label className="mb-2 block text-sm font-medium text-muted-foreground">Email</label>
-                            <div className="relative">
-                                <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyItems: 'center', padding: '24px 10%' }}>
+                    <div style={{ width: '100%', maxWidth: 380, margin: '0 auto' }}>
+                        <h2 style={{ fontSize: 32, fontWeight: 700, fontFamily: 'serif', color: '#fff', marginBottom: 8, letterSpacing: '-0.02em' }}>
+                            {isLogin ? 'Bem-vindo de volta' : 'Crie sua conta'}
+                        </h2>
+                        <p style={{ fontSize: 14, color: '#6b7280', marginBottom: 32 }}>
+                            {isLogin ? 'Entre para acessar seu dashboard' : 'Faça parte da elite financeira'}
+                        </p>
+
+                        <button
+                            type="button"
+                            onClick={() => socialLogin('google')}
+                            style={{
+                                width: '100%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: 12,
+                                backgroundColor: 'transparent',
+                                border: '1px solid rgba(255,255,255,0.06)',
+                                padding: '14px',
+                                borderRadius: 8,
+                                color: '#ebe6da',
+                                fontSize: 13,
+                                fontWeight: 500,
+                                cursor: 'pointer',
+                                transition: 'all 0.2s',
+                                marginBottom: 32
+                            }}
+                            onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.03)'}
+                            onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                        >
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+                                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+                                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+                            </svg>
+                            Continuar com Google
+                        </button>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 32 }}>
+                            <div style={{ flex: 1, height: 1, backgroundColor: 'rgba(255,255,255,0.06)' }} />
+                            <span style={{ fontSize: 11, color: '#6b7280', fontWeight: 500 }}>ou</span>
+                            <div style={{ flex: 1, height: 1, backgroundColor: 'rgba(255,255,255,0.06)' }} />
+                        </div>
+
+                        <form onSubmit={handleAuth} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                            <div>
+                                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#ebe6da', marginBottom: 8 }}>Email</label>
                                 <input
                                     type="email"
+                                    required
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     placeholder="seu@email.com"
-                                    className="w-full rounded-xl border border-white/5 bg-secondary px-12 py-3.5 text-sm text-white placeholder-muted-foreground outline-none focus:border-gold/40 transition-all"
-                                    required
+                                    style={{
+                                        width: '100%',
+                                        backgroundColor: '#12151a',
+                                        border: '1px solid rgba(255,255,255,0.06)',
+                                        borderRadius: 6,
+                                        padding: '12px 16px',
+                                        color: '#fff',
+                                        fontSize: 14,
+                                        outline: 'none',
+                                    }}
                                 />
                             </div>
-                        </div>
 
-                        <div>
-                            <label className="mb-2 block text-sm font-medium text-muted-foreground">Senha</label>
-                            <div className="relative">
-                                <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                            <div style={{ marginBottom: 4 }}>
+                                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#ebe6da', marginBottom: 8 }}>Senha</label>
                                 <input
                                     type="password"
+                                    required
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    placeholder="••••••••"
-                                    className="w-full rounded-xl border border-white/5 bg-secondary px-12 py-3.5 text-sm text-white placeholder-muted-foreground outline-none focus:border-gold/40 transition-all"
-                                    required
+                                    placeholder="Mínimo 6 caracteres"
+                                    style={{
+                                        width: '100%',
+                                        backgroundColor: '#12151a',
+                                        border: '1px solid rgba(255,255,255,0.06)',
+                                        borderRadius: 6,
+                                        padding: '12px 16px',
+                                        color: '#fff',
+                                        fontSize: 14,
+                                        outline: 'none',
+                                    }}
                                 />
                             </div>
+
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                style={{
+                                    width: '100%',
+                                    backgroundColor: '#dfc07a',
+                                    color: '#07080a',
+                                    fontWeight: 600,
+                                    fontSize: 14,
+                                    border: 'none',
+                                    borderRadius: 6,
+                                    padding: '14px',
+                                    cursor: loading ? 'not-allowed' : 'pointer',
+                                    opacity: loading ? 0.8 : 1,
+                                    transition: 'all 0.2s',
+                                    marginTop: 4
+                                }}
+                                onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#d4b05e'}
+                                onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#dfc07a'}
+                            >
+                                {loading ? 'Processando...' : (isLogin ? 'Entrar' : 'Criar Conta')}
+                            </button>
+                        </form>
+
+                        <div style={{ textAlign: 'center', marginTop: 32 }}>
+                            <span style={{ fontSize: 13, color: '#6b7280' }}>
+                                {isLogin ? 'Não tem conta? ' : 'Já possui conta? '}
+                            </span>
+                            <button
+                                onClick={() => setIsLogin(!isLogin)}
+                                style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    color: '#8b92a5',
+                                    fontSize: 13,
+                                    cursor: 'pointer',
+                                    textDecoration: 'none',
+                                    padding: 0
+                                }}
+                            >
+                                {isLogin ? 'Criar conta' : 'Entrar'}
+                            </button>
                         </div>
-
-                        {isLogin && (
-                            <div className="text-right">
-                                <a href="#" className="text-xs text-gold/80 hover:text-gold transition-colors">Esqueceu a senha?</a>
-                            </div>
-                        )}
-
-                        <button disabled={loading} className="btn-gold group mt-4 flex w-full items-center justify-center gap-2 py-4">
-                            {loading ? "Processando..." : (isLogin ? "Entrar" : "Criar Conta")}
-                            {!loading && <ArrowRight size={18} className="transition-transform group-hover:translate-x-1" />}
-                        </button>
-                    </form>
-
-                    <div className="my-8 flex items-center gap-4">
-                        <div className="h-px flex-1 bg-white/5" />
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Ou continue com</span>
-                        <div className="h-px flex-1 bg-white/5" />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        <button onClick={() => socialLogin('google')} className="flex items-center justify-center gap-2 rounded-xl border border-white/5 bg-secondary py-3 text-sm font-medium text-white hover:bg-white/5 transition-all">
-                            <Chrome size={18} /> Google
-                        </button>
-                        <button onClick={() => socialLogin('github')} className="flex items-center justify-center gap-2 rounded-xl border border-white/5 bg-secondary py-3 text-sm font-medium text-white hover:bg-white/5 transition-all">
-                            <Github size={18} /> GitHub
-                        </button>
                     </div>
                 </div>
-
-                <p className="mt-8 text-center text-sm text-muted-foreground">
-                    {isLogin ? "Não tem uma conta?" : "Já possui conta?"}{" "}
-                    <button
-                        onClick={() => setIsLogin(!isLogin)}
-                        className="font-bold text-gold hover:underline"
-                    >
-                        {isLogin ? "Cadastre-se" : "Entrar"}
-                    </button>
-                </p>
-
-                <div className="mt-8 flex items-center justify-center gap-2 text-[10px] text-muted-foreground uppercase tracking-widest">
-                    <ShieldCheck size={14} className="text-gold" />
-                    Conexão Segura AES-256
-                </div>
-            </motion.div>
+            </div>
         </div>
     );
 };
 
 export default Auth;
+
