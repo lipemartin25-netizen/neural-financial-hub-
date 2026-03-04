@@ -390,3 +390,20 @@ export type TransactionWithCategory = Transaction & {
     categories: Category | null
     accounts: Pick<Account, 'id' | 'name' | 'type' | 'color'> | null
 }
+
+export type Investment = {
+    id: string
+    user_id: string
+    ticker: string
+    name: string | null
+    type: string
+    invested_amount: number
+    current_value: number
+    monthly_return: number | null
+    quantity: number | null
+    average_price: number | null
+    notes: string | null
+    is_active: boolean
+    created_at: string
+    updated_at: string
+}
