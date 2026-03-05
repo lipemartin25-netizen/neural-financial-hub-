@@ -66,3 +66,43 @@ export function sleep(ms: number): Promise<void> {
 export function isServer(): boolean {
     return typeof window === 'undefined'
 }
+
+/**
+ * Funções puras extraídas dos componentes para facilitar testes unitários.
+ */
+
+/** Calcula dias até uma data. Retorna string formatada. */
+export function daysUntil(date: string): string {
+    const d = Math.ceil(
+        (new Date(date + 'T12:00:00').getTime() - Date.now()) / 86400000
+    )
+    if (d === 0) return 'Hoje'
+    if (d < 0) return `${Math.abs(d)}d atrás`
+    return `${d}d`
+}
+
+/** Agrupa transações por data e retorna datas ordenadas desc. */
+export function groupByDate<T extends { date: string }>(
+    items: T[]
+): { grouped: Record<string, T[]>; sortedDates: string[] } {
+    const grouped: Record<string, T[]> = {}
+    items.forEach(item => {
+        if (!grouped[item.date]) grouped[item.date] = []
+        grouped[item.date].push(item)
+    })
+    const sortedDates = Object.keys(grouped).sort(
+        (a, b) =>
+            new Date(b + 'T12:00:00').getTime() - new Date(a + 'T12:00:00').getTime()
+    )
+    return { grouped, sortedDates }
+}
+
+/** Soma amounts filtrados por tipo */
+export function sumByType<T extends { type: string; amount: number }>(
+    items: T[],
+    type: string
+): number {
+    return items
+        .filter(item => item.type === type)
+        .reduce((sum, item) => sum + item.amount, 0)
+}

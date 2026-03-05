@@ -2,7 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 const PUBLIC_ROUTES = new Set(['/', '/login', '/register', '/offline'])
-const PUBLIC_PREFIXES = ['/auth/callback', '/api/stripe/webhook', '/api/health', '/_next/', '/icons/', '/screenshots/']
+const PUBLIC_PREFIXES = ['/auth/callback', '/api/stripe/webhook', '/api/pluggy/webhook', '/api/health', '/_next/', '/icons/', '/screenshots/']
 const PUBLIC_FILES = new Set(['/sw.js', '/manifest.json', '/favicon.ico'])
 
 export async function middleware(request: NextRequest) {

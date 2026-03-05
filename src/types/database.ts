@@ -302,6 +302,7 @@ export interface Database {
                 }
                 Insert: {
                     user_id: string
+                    account_id?: string | null
                     amount: number
                     due_date: string
                     type?: string
@@ -313,6 +314,7 @@ export interface Database {
                     status?: 'pending' | 'paid' | 'overdue' | 'cancelled' | 'scheduled'
                     payment_date?: string | null
                     notes?: string | null
+                    account_id?: string | null
                 }
             }
             notifications: {
@@ -376,22 +378,33 @@ export interface Database {
 
 // Convenience type aliases
 export type Profile = Database['public']['Tables']['profiles']['Row']
-export type Account = Database['public']['Tables']['accounts']['Row']
-export type Category = Database['public']['Tables']['categories']['Row']
-export type Transaction = Database['public']['Tables']['transactions']['Row']
-export type Budget = Database['public']['Tables']['budgets']['Row']
-export type Goal = Database['public']['Tables']['goals']['Row']
 export type Bill = Database['public']['Tables']['bills']['Row']
 export type Boleto = Database['public']['Tables']['boletos']['Row']
 export type Notification = Database['public']['Tables']['notifications']['Row']
 export type WealthLabSimulation = Database['public']['Tables']['wealth_lab_simulations']['Row']
 
-export type TransactionWithCategory = Transaction & {
-    categories: Category | null
-    accounts: Pick<Account, 'id' | 'name' | 'type' | 'color'> | null
+/* ── Category ── */
+export interface Category {
+    id: string
+    user_id: string | null
+    name: string
+    icon: string | null
+    color?: string
+    type: 'income' | 'expense' | 'transfer' | null
 }
 
-export type Investment = {
+/* ── Account ── */
+export type Account = Database['public']['Tables']['accounts']['Row']
+
+/* ── Transaction ── */
+export type Transaction = Database['public']['Tables']['transactions']['Row']
+
+export type TransactionWithCategory = Transaction & {
+    category: Category | null
+    account: Pick<Account, 'id' | 'name' | 'type' | 'color'> | null
+}
+
+export interface Investment {
     id: string
     user_id: string
     ticker: string
@@ -406,4 +419,90 @@ export type Investment = {
     is_active: boolean
     created_at: string
     updated_at: string
+}
+
+/* ── Budgets ── */
+export interface Budget {
+    id: string
+    user_id: string
+    category_id: string
+    month: string
+    planned_amount: number
+    created_at: string
+    updated_at: string
+    category?: Category
+}
+
+/* ── Goals ── */
+export interface Goal {
+    id: string
+    user_id: string
+    name: string
+    icon: string
+    target_amount: number
+    current_amount: number
+    deadline: string | null
+    color: string
+    status: 'active' | 'completed' | 'cancelled'
+    created_at: string
+    updated_at: string
+}
+
+/* ── Assets ── */
+export interface Asset {
+    id: string
+    user_id: string
+    name: string
+    type: 'property' | 'vehicle' | 'investment' | 'crypto' | 'stock' | 'fixed_income' | 'other'
+    estimated_value: number
+    acquisition_date: string | null
+    notes: string | null
+    created_at: string
+    updated_at: string
+}
+
+/* ── Liabilities ── */
+export interface Liability {
+    id: string
+    user_id: string
+    name: string
+    type: 'mortgage' | 'car_loan' | 'credit_card' | 'personal_loan' | 'student_loan' | 'other'
+    total_amount: number
+    remaining_amount: number
+    monthly_payment: number | null
+    interest_rate: number | null
+    due_date: string | null
+    notes: string | null
+    created_at: string
+    updated_at: string
+}
+
+/* ── Retirement Plan ── */
+export interface RetirementPlan {
+    id: string
+    user_id: string
+    current_age: number
+    target_retirement_age: number
+    monthly_income: number
+    monthly_expenses: number
+    current_investments: number
+    monthly_contribution: number
+    expected_return_rate: number
+    inflation_rate: number
+    desired_monthly_income: number | null
+    created_at: string
+    updated_at: string
+}
+
+/* ── Monthly Snapshot ── */
+export interface MonthlySnapshot {
+    id: string
+    user_id: string
+    month: string
+    total_income: number
+    total_expenses: number
+    total_assets: number
+    total_liabilities: number
+    net_worth: number
+    created_at: string
 }

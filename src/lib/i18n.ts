@@ -18,6 +18,7 @@ const translations: Record<string, Record<Locale, string>> = {
     'nav.health': { 'pt-BR': 'Saúde Financeira', en: 'Financial Health', es: 'Salud Financiera' },
     'nav.budgets': { 'pt-BR': 'Orçamentos', en: 'Budgets', es: 'Presupuestos' },
     'nav.goals': { 'pt-BR': 'Metas', en: 'Goals', es: 'Metas' },
+    'nav.emergency_fund': { 'pt-BR': 'Reserva de Emergência', en: 'Emergency Fund', es: 'Fondo de Emergencia' },
     'nav.subscriptions': { 'pt-BR': 'Assinaturas', en: 'Subscriptions', es: 'Suscripciones' },
     'nav.family': { 'pt-BR': 'Família', en: 'Family', es: 'Familia' },
     'nav.debt_planner': { 'pt-BR': 'Plano de Dívidas', en: 'Debt Planner', es: 'Plan de Deudas' },
@@ -103,7 +104,7 @@ const translations: Record<string, Record<Locale, string>> = {
     'plan.manage': { 'pt-BR': 'Gerenciar Assinatura', en: 'Manage Subscription', es: 'Gestionar Suscripción' },
     'of.connect': { 'pt-BR': 'Conectar Banco', en: 'Connect Bank', es: 'Conectar Banco' },
     'of.sync': { 'pt-BR': 'Sincronizar', en: 'Sync', es: 'Sincronizar' },
-    'onb.welcome': { 'pt-BR': 'Bem-vindo ao AurumFin', en: 'Welcome to AurumFin', es: 'Bienvenido a AurumFin' },
+    'onb.welcome': { 'pt-BR': 'Bem-vindo ao Neural Finance Hub', en: 'Welcome to Neural Finance Hub', es: 'Bienvenido a Neural Finance Hub' },
     'onb.start': { 'pt-BR': 'Começar', en: 'Get Started', es: 'Empezar' },
     'push.allow': { 'pt-BR': 'Ativar Notificações', en: 'Enable Notifications', es: 'Activar Notificaciones' },
 }

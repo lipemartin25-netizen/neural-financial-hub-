@@ -1,13 +1,20 @@
 'use client'
-
 import { motion, AnimatePresence } from 'framer-motion'
-import { FileText, Plus, AlertTriangle, Clock, CheckCircle2, Search, Calendar, X, Trash2, Loader2, ChevronDown } from 'lucide-react'
-import { useState, useMemo, useCallback } from 'react'
-import { C, cardStyle, cardHlStyle, btnGoldStyle, btnOutlineStyle, inputStyle, fmt } from '@/lib/theme'
+import {
+    Search, Plus, AlertTriangle, Clock, CheckCircle2, Calendar, X,
+    Trash2, Loader2, ChevronDown, Download
+} from 'lucide-react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
+import { C, cardStyle, cardHlStyle, btnGoldStyle, btnOutlineStyle, inputStyle, fmt, NAV_SAFE_AREA } from '@/lib/theme'
 import { toast } from 'sonner'
-import { useBoletos } from '@/hooks/useBoletos'
+import { useFinanceStore } from '@/hooks/useFinanceStore'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
+import { SkeletonBoletoGrid } from '@/components/SkeletonCard'
+import { daysUntil } from '@/lib/utils'
 import type { Boleto } from '@/types/database'
+import { downloadCSV } from '@/lib/export'
 
+/* ── Config ── */
 const STATUS_CONFIG = {
     pending: { label: 'Pendente', color: C.yellow, bg: 'rgba(251,191,36,0.1)', Icon: Clock },
     paid: { label: 'Pago', color: C.emerald, bg: 'rgba(52,211,153,0.1)', Icon: CheckCircle2 },
@@ -16,28 +23,27 @@ const STATUS_CONFIG = {
     scheduled: { label: 'Agendado', color: '#3b82f6', bg: 'rgba(59,130,246,0.1)', Icon: Calendar },
 }
 
-const TYPE_ICONS: Record<string, string> = {
-    utility: '💡',
-    water: '💧',
-    rent: '🏢',
-    tax: '📋',
-    health: '💊',
-    internet: '🌐',
-    education: '📚',
-    insurance: '🛡️',
-    other: '🧾',
-}
+const TYPE_OPTIONS = [
+    { value: 'utility', icon: '💡', label: 'Energia' },
+    { value: 'water', icon: '💧', label: 'Água' },
+    { value: 'rent', icon: '🏢', label: 'Aluguel' },
+    { value: 'tax', icon: '📋', label: 'Impostos' },
+    { value: 'health', icon: '💊', label: 'Saúde' },
+    { value: 'internet', icon: '🌐', label: 'Internet' },
+    { value: 'education', icon: '📚', label: 'Educação' },
+    { value: 'insurance', icon: '🛡️', label: 'Seguro' },
+    { value: 'other', icon: '🧾', label: 'Outros' },
+]
 
+const TYPE_ICONS: Record<string, string> = Object.fromEntries(
+    TYPE_OPTIONS.map(t => [t.value, t.icon])
+)
+
+/* ── Types ── */
 type UiBoleto = {
-    id: string
-    name: string
-    desc: string
-    amount: number
-    due: string
+    id: string; name: string; desc: string; amount: number; due: string
     status: 'pending' | 'paid' | 'overdue' | 'cancelled' | 'scheduled'
-    type: string
-    typeIcon: string
-    raw: Boleto
+    type: string; typeIcon: string; raw: Boleto
 }
 
 function mapToUi(b: Boleto): UiBoleto {
@@ -47,27 +53,39 @@ function mapToUi(b: Boleto): UiBoleto {
         desc: b.notes ?? b.type ?? '',
         amount: Number(b.amount),
         due: b.due_date,
-        status: b.status,
+        status: b.status as UiBoleto['status'],
         type: b.type ?? 'other',
         typeIcon: TYPE_ICONS[b.type ?? 'other'] ?? '🧾',
         raw: b,
     }
 }
 
-export default function BoletosPage() {
-    const { boletos: rawBoletos, loading, createBoleto, updateBoleto, deleteBoleto, markAsPaid } = useBoletos()
+function BoletosContent() {
+    const {
+        boletos: rawBoletos, accounts, loading,
+        fetchBoletos, fetchAccounts,
+        addBoleto, updateBoleto, deleteBoleto, markAsPaid
+    } = useFinanceStore()
+
+    useEffect(() => {
+        fetchBoletos()
+        fetchAccounts()
+    }, [fetchBoletos, fetchAccounts])
 
     const boletos = useMemo(() => rawBoletos.map(mapToUi), [rawBoletos])
-
     const [filter, setFilter] = useState<'all' | 'pending' | 'overdue' | 'paid'>('all')
     const [search, setSearch] = useState('')
     const [showModal, setShowModal] = useState(false)
+    const [showPayModal, setShowPayModal] = useState(false)
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null)
+    const [payBoleto, setPayBoleto] = useState<UiBoleto | null>(null)
+    const [selectedPayAccount, setSelectedPayAccount] = useState('')
     const [editingBoleto, setEditingBoleto] = useState<UiBoleto | null>(null)
     const [deleting, setDeleting] = useState<string | null>(null)
     const [saving, setSaving] = useState(false)
     const [paying, setPaying] = useState<string | null>(null)
 
-    // Form State
+    /* ── Form ── */
     const [bName, setBName] = useState('')
     const [bDesc, setBDesc] = useState('')
     const [bAmount, setBAmount] = useState('')
@@ -75,61 +93,54 @@ export default function BoletosPage() {
     const [bType, setBType] = useState('other')
     const [bBarcode, setBBarcode] = useState('')
 
+    /* ── Derived data ── */
     const filtered = useMemo(() => {
         return boletos.filter(b => {
             if (filter !== 'all' && b.status !== filter) return false
             if (search && !b.name.toLowerCase().includes(search.toLowerCase()) && !b.desc.toLowerCase().includes(search.toLowerCase())) return false
             return true
-        }).sort((a, b) => new Date(a.due).getTime() - new Date(b.due).getTime())
+        }).sort((a, b) => new Date(a.due + 'T12:00:00').getTime() - new Date(b.due + 'T12:00:00').getTime())
     }, [boletos, filter, search])
 
     const overdueItems = useMemo(() => boletos.filter(b => b.status === 'overdue'), [boletos])
     const pendingTotal = useMemo(() => boletos.filter(b => b.status === 'pending').reduce((s, b) => s + b.amount, 0), [boletos])
 
-    const daysUntil = (date: string) => {
-        const d = Math.ceil((new Date(date).getTime() - Date.now()) / 86400000)
-        if (d === 0) return 'Hoje'
-        if (d < 0) return `${Math.abs(d)}d atrás`
-        return `${d}d`
+    /* ── Handlers ── */
+    const resetForm = useCallback(() => {
+        setBName(''); setBDesc(''); setBAmount('')
+        setBDue(new Date().toISOString().split('T')[0])
+        setBType('other'); setBBarcode(''); setEditingBoleto(null)
+    }, [])
+
+    const openCreate = () => { resetForm(); setShowModal(true) }
+
+    const openEdit = (b: UiBoleto) => {
+        setEditingBoleto(b); setBName(b.name); setBDesc(b.desc)
+        setBAmount(String(b.amount)); setBDue(b.due); setBType(b.type)
+        setBBarcode(b.raw.barcode || ''); setShowModal(true)
     }
 
-    const resetForm = useCallback(() => {
-        setBName('')
-        setBDesc('')
-        setBAmount('')
-        setBDue(new Date().toISOString().split('T')[0])
-        setBType('other')
-        setBBarcode('')
-        setEditingBoleto(null)
-    }, [])
-
-    const openCreate = useCallback(() => {
-        resetForm()
-        setShowModal(true)
-    }, [resetForm])
-
-    const openEdit = useCallback((b: UiBoleto) => {
-        setEditingBoleto(b)
-        setBName(b.name)
-        setBDesc(b.desc)
-        setBAmount(String(b.amount))
-        setBDue(b.due)
-        setBType(b.type)
-        setBBarcode(b.raw.barcode ?? '')
-        setShowModal(true)
-    }, [])
-
-    const handleMarkAsPaid = async (id: string) => {
-        setPaying(id)
-        const { error } = await markAsPaid(id)
-        setPaying(null)
-
-        if (error) {
-            toast.error(error, { style: { background: C.card, color: C.red, border: `1px solid rgba(248,113,113,0.3)` } })
+    const handleSave = async () => {
+        if (!bName || !bAmount) { toast.error('Preencha o nome e o valor'); return }
+        setSaving(true)
+        const payload = {
+            beneficiary_name: bName,
+            amount: parseFloat(bAmount),
+            due_date: bDue,
+            type: bType,
+            notes: bDesc || null,
+            barcode: bBarcode || null
+        }
+        const result = editingBoleto
+            ? await updateBoleto(editingBoleto.id, payload)
+            : await addBoleto(payload)
+        setSaving(false)
+        if (result.error) {
+            toast.error(result.error)
         } else {
-            toast.success('Boleto marcado como pago!', {
-                style: { background: C.card, color: C.text, border: `1px solid ${C.border}` }
-            })
+            setShowModal(false)
+            resetForm()
+            toast.success(editingBoleto ? 'Boleto atualizado!' : 'Boleto cadastrado!')
         }
     }
 
@@ -137,278 +148,201 @@ export default function BoletosPage() {
         setDeleting(id)
         const { error } = await deleteBoleto(id)
         setDeleting(null)
-
-        if (error) {
-            toast.error(error, { style: { background: C.card, color: C.red, border: `1px solid rgba(248,113,113,0.3)` } })
-        } else {
-            toast.success('Boleto excluído', {
-                style: { background: C.card, color: C.text, border: `1px solid ${C.border}` }
-            })
-        }
+        setShowDeleteConfirm(null)
+        if (error) toast.error(error)
+        else toast.success('Boleto excluído!')
     }
 
-    const handleSave = async () => {
-        if (!bName || !bAmount) {
-            toast.error('Preencha o nome e o valor')
-            return
-        }
-
-        setSaving(true)
-
-        if (editingBoleto) {
-            // ========== EDITAR ==========
-            const { error } = await updateBoleto(editingBoleto.id, {
-                beneficiary_name: bName,
-                amount: parseFloat(bAmount),
-                due_date: bDue,
-                type: bType,
-                notes: bDesc || null,
-                barcode: bBarcode || null,
-            })
-
-            setSaving(false)
-            if (error) {
-                toast.error(error, { style: { background: C.card, color: C.red, border: `1px solid rgba(248,113,113,0.3)` } })
-            } else {
-                setShowModal(false)
-                resetForm()
-                toast.success('Boleto atualizado!', {
-                    style: { background: C.card, color: C.text, border: `1px solid ${C.border}` }
-                })
-            }
-        } else {
-            // ========== CRIAR ==========
-            const { error } = await createBoleto({
-                beneficiary_name: bName,
-                amount: parseFloat(bAmount),
-                due_date: bDue,
-                type: bType,
-                notes: bDesc || null,
-                barcode: bBarcode || null,
-            })
-
-            setSaving(false)
-            if (error) {
-                toast.error(error, { style: { background: C.card, color: C.red, border: `1px solid rgba(248,113,113,0.3)` } })
-            } else {
-                setShowModal(false)
-                resetForm()
-                toast.success('Boleto adicionado com sucesso!', {
-                    style: { background: C.card, color: C.text, border: `1px solid ${C.border}` }
-                })
-            }
-        }
+    const handleMarkAsPaidSubmit = async (id: string, accountId: string) => {
+        setPaying(id)
+        const { error } = await markAsPaid(id, accountId)
+        setPaying(null)
+        if (error) toast.error(error)
+        else { toast.success('Boleto pago e transação gerada!'); setShowPayModal(false) }
     }
 
-    const selectStyle: React.CSSProperties = {
-        ...inputStyle,
-        appearance: 'none',
-        WebkitAppearance: 'none',
-        backgroundImage: 'none',
-        cursor: 'pointer',
+    const handleExportCSV = () => {
+        const headers = ['Vencimento', 'Beneficiário', 'Valor', 'Status', 'Tipo']
+        const rows = filtered.map(b => [
+            new Date(b.due + 'T12:00:00').toLocaleDateString('pt-BR'),
+            b.name, fmt(b.amount), b.status, b.type
+        ])
+        downloadCSV('neuralfinance_boletos', headers, rows)
+        toast.success('CSV exportado!')
     }
+
+    /* ── Compact tokens ── */
+    const compactCard: React.CSSProperties = { ...cardStyle, borderRadius: 12 }
+    const compactBtn: React.CSSProperties = { ...btnGoldStyle, padding: '8px 16px', fontSize: 13 }
+    const compactBtnOut: React.CSSProperties = { ...btnOutlineStyle, padding: '8px 16px', fontSize: 13 }
+    const compactInput: React.CSSProperties = { ...inputStyle, padding: '10px 14px', fontSize: 13 }
+    const selectStyle: React.CSSProperties = { ...compactInput, appearance: 'none', WebkitAppearance: 'none', backgroundImage: 'none', cursor: 'pointer' }
 
     return (
-        <div>
-            {/* Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 16 }}>
+        <div style={{ paddingBottom: NAV_SAFE_AREA }}>
+            {/* ── Header ── */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
                 <div>
-                    <h1 style={{ fontSize: 24, fontWeight: 700, color: C.text }}>Contas a Pagar</h1>
-                    <p style={{ fontSize: 14, color: C.textMuted, marginTop: 4 }}>
+                    <h1 style={{ fontSize: 20, fontWeight: 700, color: C.text }}>Boletos e Contas</h1>
+                    <p style={{ fontSize: 13, color: C.textMuted, marginTop: 2 }}>
                         {loading ? 'Carregando...' : `${boletos.length} boletos · ${fmt(pendingTotal)} pendente`}
                     </p>
                 </div>
-                <button onClick={openCreate} style={btnGoldStyle}><Plus size={16} /> Novo Boleto</button>
-            </div>
-
-            {/* Alerta de Vencidos */}
-            <AnimatePresence>
-                {!loading && overdueItems.length > 0 && (
-                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
-                        style={{ display: 'flex', alignItems: 'center', gap: 16, padding: 16, borderRadius: 16, border: '1px solid rgba(248,113,113,0.2)', backgroundColor: 'rgba(248,113,113,0.05)', marginBottom: 24, overflow: 'hidden' }}>
-                        <AlertTriangle size={24} style={{ color: C.red, flexShrink: 0 }} />
-                        <div>
-                            <p style={{ fontWeight: 600, color: C.red }}>{overdueItems.length} boleto(s) vencido(s)</p>
-                            <p style={{ fontSize: 13, color: 'rgba(248,113,113,0.6)' }}>Total: {fmt(overdueItems.reduce((s, b) => s + b.amount, 0))}</p>
-                        </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-
-            {/* Search + Filter */}
-            <div style={{ display: 'flex', gap: 12, marginBottom: 24, flexWrap: 'wrap' }}>
-                <div style={{ position: 'relative', flex: 1, minWidth: 200 }}>
-                    <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: C.textMuted }} />
-                    <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar..." style={{ ...inputStyle, paddingLeft: 40 }} />
-                </div>
-                {(['all', 'pending', 'overdue', 'paid'] as const).map(f => (
-                    <button key={f} onClick={() => setFilter(f)} style={filter === f ? btnGoldStyle : btnOutlineStyle}>
-                        {f === 'all' ? 'Todos' : f === 'pending' ? 'Pendentes' : f === 'overdue' ? 'Vencidos' : 'Pagos'}
+                <div style={{ display: 'flex', gap: 8 }}>
+                    <button onClick={handleExportCSV} style={compactBtnOut} aria-label="Exportar CSV">
+                        <Download size={14} /> CSV
                     </button>
-                ))}
+                    <button onClick={openCreate} style={compactBtn} aria-label="Novo boleto">
+                        <Plus size={14} /> Novo
+                    </button>
+                </div>
             </div>
 
-            {/* Loading */}
-            {loading && (
-                <div style={{ ...cardStyle, padding: 64, textAlign: 'center' }}>
-                    <Loader2 size={32} style={{ color: C.gold, margin: '0 auto 16px', animation: 'spin 1s linear infinite' }} />
-                    <p style={{ fontSize: 14, color: C.textMuted }}>Carregando boletos...</p>
-                </div>
+            {/* ── Alerta de Vencidos ── */}
+            {overdueItems.length > 0 && (
+                <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
+                    style={{ backgroundColor: 'rgba(239,68,68,0.1)', border: `1px solid ${C.red}33`, padding: '10px 14px', borderRadius: 10, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 10 }}
+                    role="alert"
+                    aria-live="polite"
+                >
+                    <AlertTriangle style={{ color: C.red, flexShrink: 0 }} size={16} />
+                    <span style={{ color: C.red, fontSize: 13, fontWeight: 500 }}>
+                        {overdueItems.length} {overdueItems.length === 1 ? 'boleto está' : 'boletos estão'} vencidos.
+                    </span>
+                </motion.div>
             )}
 
-            {/* List */}
-            {!loading && (
-                <AnimatePresence>
-                    {filtered.map((b, i) => {
-                        const st = STATUS_CONFIG[b.status] ?? STATUS_CONFIG.pending
-                        return (
-                            <motion.div key={b.id} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ delay: i * 0.05 }}
-                                style={{ ...cardStyle, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 20, marginBottom: 8, overflow: 'hidden', cursor: 'pointer' }}>
+            {/* ── Filtros ── */}
+            <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
+                <div style={{ position: 'relative', flex: '1 1 200px', maxWidth: 320, minWidth: 0 }}>
+                    <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: C.textMuted, zIndex: 1 }} />
+                    <input
+                        value={search}
+                        onChange={e => setSearch(e.target.value)}
+                        placeholder="Pesquisar..."
+                        aria-label="Pesquisar boletos"
+                        style={{ ...compactInput, paddingLeft: 36, width: '100%', boxSizing: 'border-box' }}
+                    />
+                </div>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    {(['all', 'pending', 'overdue', 'paid'] as const).map(f => (
+                        <button key={f} onClick={() => setFilter(f)}
+                            style={{ ...(filter === f ? compactBtn : compactBtnOut), whiteSpace: 'nowrap' }}
+                            aria-label={`Filtrar: ${f === 'all' ? 'Todos' : f === 'pending' ? 'Pendentes' : f === 'overdue' ? 'Vencidos' : 'Pagos'}`}
+                            aria-pressed={filter === f}
+                        >
+                            {f === 'all' ? 'Todos' : f === 'pending' ? 'Pendentes' : f === 'overdue' ? 'Vencidos' : 'Pagos'}
+                        </button>
+                    ))}
+                </div>
+            </div>
 
-                                {/* Left: Info */}
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1 }} onClick={() => openEdit(b)}>
-                                    <div style={{ width: 40, height: 40, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: st.bg }}>
-                                        <st.Icon size={18} style={{ color: st.color }} />
-                                    </div>
-                                    <div>
-                                        <p style={{ fontSize: 14, fontWeight: 500, color: b.status === 'paid' ? C.textMuted : C.text, textDecoration: b.status === 'paid' ? 'line-through' : 'none' }}>{b.name}</p>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 }}>
-                                            <span style={{ fontSize: 12, color: C.textMuted }}>{b.typeIcon} {b.desc}</span>
-                                            <span style={{ fontSize: 12, color: C.textMuted }}>·</span>
-                                            <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: C.textMuted }}>
-                                                <Calendar size={10} />
-                                                {new Date(b.due + 'T12:00:00').toLocaleDateString('pt-BR')}
-                                                <span style={{ fontWeight: 500, color: b.status === 'overdue' ? C.red : b.status === 'pending' ? C.yellow : C.textMuted }}>
-                                                    ({daysUntil(b.due)})
-                                                </span>
-                                            </span>
+            {/* ── List (Skeleton, Empty ou Real) ── */}
+            {loading ? (
+                <SkeletonBoletoGrid count={4} />
+            ) : filtered.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '48px 16px' }} aria-live="polite">
+                    <p style={{ fontSize: 40, marginBottom: 12 }}>📭</p>
+                    <p style={{ color: C.textMuted, fontSize: 14, marginBottom: 16 }}>Nenhum boleto encontrado</p>
+                    <button onClick={openCreate} style={compactBtn}><Plus size={14} /> Cadastrar primeiro</button>
+                </div>
+            ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 10 }} aria-live="polite">
+                    {filtered.map(b => {
+                        const ST = STATUS_CONFIG[b.status] || STATUS_CONFIG.pending
+                        return (
+                            <motion.div layout key={b.id} style={{ ...compactCard, padding: '12px 14px', cursor: 'pointer' }} onClick={() => openEdit(b)}>
+                                {/* Top */}
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                                    <div style={{ display: 'flex', gap: 10, minWidth: 0, flex: 1 }}>
+                                        <div style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: C.secondary, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>
+                                            {b.typeIcon}
+                                        </div>
+                                        <div style={{ minWidth: 0 }}>
+                                            <h3 style={{ fontSize: 13, fontWeight: 600, color: C.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{b.name}</h3>
+                                            <p style={{ fontSize: 11, color: C.textMuted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{b.desc}</p>
                                         </div>
                                     </div>
+                                    <div style={{ backgroundColor: ST.bg, color: ST.color, padding: '3px 7px', borderRadius: 6, fontSize: 10, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 3, flexShrink: 0, marginLeft: 8 }}>
+                                        <ST.Icon size={10} /> {ST.label}
+                                    </div>
                                 </div>
-
-                                {/* Right: Amount + Actions */}
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                                    <p style={{
-                                        fontSize: 16, fontWeight: 700,
-                                        color: b.status === 'paid' ? C.textMuted : b.status === 'overdue' ? C.red : C.text,
-                                        textDecoration: b.status === 'paid' ? 'line-through' : 'none',
-                                    }}>{fmt(b.amount)}</p>
-
-                                    {b.status !== 'paid' && b.status !== 'cancelled' && (
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); handleMarkAsPaid(b.id) }}
-                                            disabled={paying === b.id}
-                                            style={{ padding: '6px 12px', borderRadius: 8, border: 'none', backgroundColor: 'rgba(52,211,153,0.1)', color: C.emerald, fontSize: 12, fontWeight: 500, cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                                            {paying === b.id ? <Loader2 size={12} style={{ animation: 'spin 1s linear infinite' }} /> : 'Paguei ✓'}
-                                        </button>
-                                    )}
-
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); handleDelete(b.id) }}
-                                        disabled={deleting === b.id}
-                                        style={{
-                                            background: 'none', border: 'none', cursor: 'pointer', padding: 6, borderRadius: 8,
-                                            color: 'rgba(248,113,113,0.4)', transition: 'color 0.2s',
-                                        }}
-                                        onMouseEnter={e => (e.currentTarget.style.color = C.red)}
-                                        onMouseLeave={e => (e.currentTarget.style.color = 'rgba(248,113,113,0.4)')}
-                                        title="Excluir boleto"
-                                    >
-                                        {deleting === b.id ? <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <Trash2 size={14} />}
-                                    </button>
+                                {/* Bottom */}
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <div>
+                                        <p style={{ fontSize: 16, fontWeight: 700, color: C.text, lineHeight: 1.2 }}>{fmt(b.amount)}</p>
+                                        <p style={{ fontSize: 11, color: b.status === 'overdue' ? C.red : C.textMuted, display: 'flex', alignItems: 'center', gap: 3, marginTop: 2 }}>
+                                            <Calendar size={10} /> {daysUntil(b.due)} ({new Date(b.due + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })})
+                                        </p>
+                                    </div>
+                                    <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                                        {/* Delete */}
+                                        {b.status !== 'paid' && (
+                                            <button
+                                                onClick={e => { e.stopPropagation(); setShowDeleteConfirm(b.id) }}
+                                                aria-label={`Excluir boleto ${b.name}`}
+                                                style={{ padding: '6px 8px', borderRadius: 7, border: 'none', backgroundColor: 'rgba(248,113,113,0.1)', color: C.red, fontSize: 12, cursor: 'pointer', opacity: 0.6, transition: 'opacity 0.2s' }}
+                                                onMouseEnter={e => (e.currentTarget.style.opacity = '1')}
+                                                onMouseLeave={e => (e.currentTarget.style.opacity = '0.6')}
+                                            >
+                                                <Trash2 size={12} />
+                                            </button>
+                                        )}
+                                        {/* Pay */}
+                                        {b.status !== 'paid' && b.status !== 'cancelled' && (
+                                            <button
+                                                onClick={e => {
+                                                    e.stopPropagation()
+                                                    setPayBoleto(b); setSelectedPayAccount(accounts[0]?.id || ''); setShowPayModal(true)
+                                                }}
+                                                disabled={paying === b.id}
+                                                aria-label={`Pagar boleto ${b.name}`}
+                                                style={{ padding: '6px 12px', borderRadius: 7, border: 'none', backgroundColor: 'rgba(52,211,153,0.1)', color: C.emerald, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
+                                            >
+                                                {paying === b.id
+                                                    ? <Loader2 size={12} className="animate-spin" />
+                                                    : 'Pagar ✔'}
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
                             </motion.div>
                         )
                     })}
-                </AnimatePresence>
-            )}
-
-            {/* Empty */}
-            {!loading && filtered.length === 0 && (
-                <div style={{ ...cardStyle, padding: 64, textAlign: 'center' }}>
-                    <FileText size={40} style={{ color: 'rgba(107,114,128,0.3)', margin: '0 auto 16px' }} />
-                    <p style={{ fontSize: 18, fontWeight: 500, color: C.textMuted }}>
-                        {boletos.length === 0 ? 'Nenhum boleto cadastrado' : 'Nenhum boleto encontrado'}
-                    </p>
-                    {boletos.length === 0 && (
-                        <p style={{ fontSize: 13, color: 'rgba(107,114,128,0.5)', marginTop: 8 }}>
-                            Clique em &quot;Novo Boleto&quot; para começar
-                        </p>
-                    )}
                 </div>
             )}
 
-            {/* ========== MODAL (Create / Edit) ========== */}
+            {/* ── Delete Confirmation Modal ── */}
             <AnimatePresence>
-                {showModal && (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                        style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.6)', padding: 16 }}
-                        onClick={() => { setShowModal(false); resetForm() }}>
-                        <motion.div initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }}
-                            onClick={e => e.stopPropagation()} style={{ ...cardHlStyle, width: '100%', maxWidth: 480, padding: 24, maxHeight: '90vh', overflowY: 'auto' }}>
-
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24 }}>
-                                <h2 style={{ fontSize: 18, fontWeight: 700, color: C.text }}>
-                                    {editingBoleto ? 'Editar Boleto' : 'Novo Boleto'}
-                                </h2>
-                                <button aria-label="Ação" onClick={() => { setShowModal(false); resetForm() }} style={{ background: 'none', border: 'none', color: C.textMuted, cursor: 'pointer' }}><X size={20} /></button>
+                {showDeleteConfirm && (
+                    <motion.div
+                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                        style={{ position: 'fixed', inset: 0, zIndex: 120, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.6)', padding: 16 }}
+                        onClick={() => setShowDeleteConfirm(null)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
+                            onClick={e => e.stopPropagation()}
+                            style={{ ...cardHlStyle, width: '100%', maxWidth: 340, padding: 20, textAlign: 'center' }}
+                            role="alertdialog"
+                            aria-labelledby="delete-boleto-title"
+                            aria-describedby="delete-boleto-desc"
+                        >
+                            <div style={{ width: 48, height: 48, borderRadius: 12, background: 'rgba(248,113,113,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                                <Trash2 size={22} style={{ color: C.red }} />
                             </div>
-
-                            {/* Nome */}
-                            <div style={{ marginBottom: 16 }}>
-                                <label style={{ display: 'block', fontSize: 13, color: C.textMuted, marginBottom: 6 }}>Nome / Empresa</label>
-                                <input value={bName} onChange={e => setBName(e.target.value)} placeholder="Ex: CPFL, Sabesp, Escola..." style={inputStyle} />
-                            </div>
-
-                            {/* Valor */}
-                            <div style={{ marginBottom: 16 }}>
-                                <label style={{ display: 'block', fontSize: 13, color: C.textMuted, marginBottom: 6 }}>Valor (R$)</label>
-                                <input type="number" value={bAmount} onChange={e => setBAmount(e.target.value)} placeholder="0,00" step="0.01" min="0" style={{ ...inputStyle, fontSize: 24, fontWeight: 700 }} />
-                            </div>
-
-                            {/* Vencimento + Tipo */}
-                            <div style={{ marginBottom: 16, display: 'flex', gap: 12 }}>
-                                <div style={{ flex: 1 }}>
-                                    <label style={{ display: 'block', fontSize: 13, color: C.textMuted, marginBottom: 6 }}>Vencimento</label>
-                                    <input aria-label="Entrada de texto" type="date" value={bDue} onChange={e => setBDue(e.target.value)} style={inputStyle} />
-                                </div>
-                                <div style={{ flex: 1 }}>
-                                    <label style={{ display: 'block', fontSize: 13, color: C.textMuted, marginBottom: 6 }}>Tipo</label>
-                                    <div style={{ position: 'relative' }}>
-                                        <select aria-label="Selecionar opção" value={bType} onChange={e => setBType(e.target.value)} style={selectStyle}>
-                                            <option value="utility">💡 Energia</option>
-                                            <option value="water">💧 Água</option>
-                                            <option value="rent">🏢 Aluguel/Condomínio</option>
-                                            <option value="tax">📋 Imposto/Taxa</option>
-                                            <option value="health">💊 Saúde</option>
-                                            <option value="internet">🌐 Internet/Telecom</option>
-                                            <option value="education">📚 Educação</option>
-                                            <option value="insurance">🛡️ Seguro</option>
-                                            <option value="other">🧾 Outros</option>
-                                        </select>
-                                        <ChevronDown size={14} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: C.textMuted, pointerEvents: 'none' }} />
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Descrição / Notas */}
-                            <div style={{ marginBottom: 16 }}>
-                                <label style={{ display: 'block', fontSize: 13, color: C.textMuted, marginBottom: 6 }}>Descrição (opcional)</label>
-                                <input value={bDesc} onChange={e => setBDesc(e.target.value)} placeholder="Ex: Conta de luz março, 3ª parcela..." style={inputStyle} />
-                            </div>
-
-                            {/* Código de Barras */}
-                            <div style={{ marginBottom: 16 }}>
-                                <label style={{ display: 'block', fontSize: 13, color: C.textMuted, marginBottom: 6 }}>Código de Barras (opcional)</label>
-                                <input value={bBarcode} onChange={e => setBBarcode(e.target.value)} placeholder="Cole o código de barras aqui..." style={{ ...inputStyle, fontSize: 12, fontFamily: 'monospace' }} />
-                            </div>
-
-                            {/* Botões */}
-                            <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
-                                <button onClick={() => { setShowModal(false); resetForm() }} style={{ ...btnOutlineStyle, flex: 1, padding: '12px 0' }}>Cancelar</button>
-                                <button onClick={handleSave} disabled={saving} style={{ ...btnGoldStyle, flex: 1, padding: '12px 0', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: saving ? 0.7 : 1 }}>
-                                    {saving && <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} />}
-                                    {saving ? 'Salvando...' : editingBoleto ? 'Atualizar' : 'Salvar Boleto'}
+                            <h3 id="delete-boleto-title" style={{ fontSize: 16, fontWeight: 700, color: C.text, marginBottom: 8 }}>Excluir boleto?</h3>
+                            <p id="delete-boleto-desc" style={{ color: C.textMuted, fontSize: 13, marginBottom: 20 }}>Esta ação não pode ser desfeita.</p>
+                            <div style={{ display: 'flex', gap: 10 }}>
+                                <button onClick={() => setShowDeleteConfirm(null)} style={{ ...compactBtnOut, flex: 1 }}>Cancelar</button>
+                                <button
+                                    onClick={() => handleDelete(showDeleteConfirm)}
+                                    disabled={deleting === showDeleteConfirm}
+                                    style={{ ...compactBtn, flex: 1, background: C.red, border: 'none', opacity: deleting ? 0.6 : 1 }}
+                                >
+                                    {deleting === showDeleteConfirm
+                                        ? <Loader2 size={14} className="animate-spin" />
+                                        : 'Excluir'}
                                 </button>
                             </div>
                         </motion.div>
@@ -416,7 +350,136 @@ export default function BoletosPage() {
                 )}
             </AnimatePresence>
 
-            <style jsx>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+            {/* ── Create/Edit Modal ── */}
+            <AnimatePresence>
+                {showModal && (
+                    <motion.div
+                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                        style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.6)', padding: 16 }}
+                        onClick={() => { setShowModal(false); resetForm() }}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }}
+                            onClick={e => e.stopPropagation()}
+                            style={{ ...cardHlStyle, width: '100%', maxWidth: 420, padding: 20, maxHeight: '90vh', overflowY: 'auto' }}
+                            role="dialog"
+                            aria-labelledby="boleto-modal-title"
+                        >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
+                                <h2 id="boleto-modal-title" style={{ fontSize: 16, fontWeight: 700, color: C.text }}>
+                                    {editingBoleto ? 'Editar Boleto' : 'Novo Boleto'}
+                                </h2>
+                                <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', color: C.textMuted, cursor: 'pointer' }} aria-label="Fechar modal">
+                                    <X size={18} />
+                                </button>
+                            </div>
+
+                            {/* Nome */}
+                            <div style={{ marginBottom: 12 }}>
+                                <label style={{ display: 'block', fontSize: 11, color: C.textMuted, marginBottom: 4 }}>Nome / Empresa *</label>
+                                <input value={bName} onChange={e => setBName(e.target.value)} placeholder="Ex: CPFL, Sabesp..." style={compactInput} />
+                            </div>
+
+                            {/* Valor */}
+                            <div style={{ marginBottom: 12 }}>
+                                <label style={{ display: 'block', fontSize: 11, color: C.textMuted, marginBottom: 4 }}>Valor (R$) *</label>
+                                <input type="number" step="0.01" min="0" value={bAmount} onChange={e => setBAmount(e.target.value)} placeholder="0,00" style={{ ...compactInput, fontSize: 20, fontWeight: 700 }} />
+                            </div>
+
+                            {/* Vencimento + Tipo */}
+                            <div style={{ marginBottom: 12, display: 'flex', gap: 10 }}>
+                                <div style={{ flex: 1 }}>
+                                    <label style={{ display: 'block', fontSize: 11, color: C.textMuted, marginBottom: 4 }}>Vencimento</label>
+                                    <input type="date" value={bDue} onChange={e => setBDue(e.target.value)} style={compactInput} />
+                                </div>
+                                <div style={{ flex: 1 }}>
+                                    <label style={{ display: 'block', fontSize: 11, color: C.textMuted, marginBottom: 4 }}>Tipo</label>
+                                    <div style={{ position: 'relative' }}>
+                                        <select value={bType} onChange={e => setBType(e.target.value)} style={selectStyle}>
+                                            {TYPE_OPTIONS.map(t => (
+                                                <option key={t.value} value={t.value}>{t.icon} {t.label}</option>
+                                            ))}
+                                        </select>
+                                        <ChevronDown size={12} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: C.textMuted }} />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Observações */}
+                            <div style={{ marginBottom: 12 }}>
+                                <label style={{ display: 'block', fontSize: 11, color: C.textMuted, marginBottom: 4 }}>Observações</label>
+                                <input value={bDesc} onChange={e => setBDesc(e.target.value)} placeholder="Opcional..." style={compactInput} />
+                            </div>
+
+                            {/* Código de Barras */}
+                            <div style={{ marginBottom: 12 }}>
+                                <label style={{ display: 'block', fontSize: 11, color: C.textMuted, marginBottom: 4 }}>Código de Barras (opcional)</label>
+                                <input value={bBarcode} onChange={e => setBBarcode(e.target.value)} style={{ ...compactInput, fontFamily: 'monospace' }} />
+                            </div>
+
+                            {/* Actions */}
+                            <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
+                                <button onClick={() => setShowModal(false)} style={{ ...compactBtnOut, flex: 1 }}>Cancelar</button>
+                                <button onClick={handleSave} disabled={saving} style={{ ...compactBtn, flex: 1, opacity: saving ? 0.6 : 1 }}>
+                                    {saving
+                                        ? <Loader2 size={14} className="animate-spin" />
+                                        : editingBoleto ? 'Atualizar' : 'Salvar'}
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* ── Pay Modal ── */}
+            <AnimatePresence>
+                {showPayModal && payBoleto && (
+                    <motion.div
+                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                        style={{ position: 'fixed', inset: 0, zIndex: 110, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.7)', padding: 16 }}
+                        onClick={() => setShowPayModal(false)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
+                            onClick={e => e.stopPropagation()}
+                            style={{ ...cardHlStyle, width: '100%', maxWidth: 380, padding: 20 }}
+                            role="dialog"
+                            aria-labelledby="pay-modal-title"
+                        >
+                            <h2 id="pay-modal-title" style={{ fontSize: 16, fontWeight: 700, color: C.text, marginBottom: 16 }}>Confirmar Pagamento</h2>
+                            <p style={{ color: C.textMuted, marginBottom: 12, fontSize: 13 }}>
+                                Pagar <b style={{ color: C.text }}>{payBoleto.name}</b> de <b style={{ color: C.text }}>{fmt(payBoleto.amount)}</b> usando:
+                            </p>
+                            <div style={{ position: 'relative', marginBottom: 20 }}>
+                                <select value={selectedPayAccount} onChange={e => setSelectedPayAccount(e.target.value)} style={selectStyle}>
+                                    {accounts.map(acc => (
+                                        <option key={acc.id} value={acc.id}>{acc.name} ({fmt(acc.balance)})</option>
+                                    ))}
+                                </select>
+                                <ChevronDown size={12} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: C.textMuted }} />
+                            </div>
+                            <button
+                                onClick={() => handleMarkAsPaidSubmit(payBoleto.id, selectedPayAccount)}
+                                disabled={paying === payBoleto.id}
+                                style={{ ...compactBtn, width: '100%', opacity: paying ? 0.6 : 1 }}
+                            >
+                                {paying === payBoleto.id
+                                    ? <Loader2 size={14} className="animate-spin" />
+                                    : 'Confirmar Pagamento ✔'}
+                            </button>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
+    )
+}
+
+/* ── Page export with ErrorBoundary ── */
+export default function BoletosPage() {
+    return (
+        <ErrorBoundary fallbackTitle="Erro nos Boletos" fallbackDescription="Não foi possível carregar seus boletos. Tente novamente.">
+            <BoletosContent />
+        </ErrorBoundary>
     )
 }

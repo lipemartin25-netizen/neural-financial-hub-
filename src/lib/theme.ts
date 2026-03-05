@@ -29,6 +29,7 @@ export const C = {
 }
 
 export const cardStyle: React.CSSProperties = {
+    boxSizing: 'border-box',
     background: C.cardGrad,
     border: `1px solid ${C.borderGold}`,
     borderRadius: 16,
@@ -38,6 +39,7 @@ export const cardStyle: React.CSSProperties = {
 }
 
 export const cardHlStyle: React.CSSProperties = {
+    boxSizing: 'border-box',
     background: C.cardHlGrad,
     border: `1px solid rgba(201,168,88,0.18)`,
     borderRadius: 16,
@@ -46,6 +48,7 @@ export const cardHlStyle: React.CSSProperties = {
 }
 
 export const inputStyle: React.CSSProperties = {
+    boxSizing: 'border-box',
     width: '100%',
     backgroundColor: C.card,
     color: C.text,
@@ -58,6 +61,7 @@ export const inputStyle: React.CSSProperties = {
 }
 
 export const btnGoldStyle: React.CSSProperties = {
+    boxSizing: 'border-box',
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -76,6 +80,7 @@ export const btnGoldStyle: React.CSSProperties = {
 }
 
 export const btnOutlineStyle: React.CSSProperties = {
+    boxSizing: 'border-box',
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -120,3 +125,7 @@ export const badgeStyle = (color: string, bg: string): React.CSSProperties => ({
 
 export const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 export const fmtPct = (v: number) => `${v >= 0 ? '+' : ''}${v.toFixed(2)}%`
+
+/* ── Layout Constants ── */
+export const NAV_HEIGHT = 72
+export const NAV_SAFE_AREA = NAV_HEIGHT + 8 // 80px — padding bottom das páginas

@@ -7,7 +7,7 @@ import {
     LayoutDashboard, ArrowLeftRight, CreditCard, FileText, Building2,
     TrendingUp, PieChart, Heart, Target, BarChart3, Bot, FlaskConical,
     Settings, Menu, X, LogOut, ChevronLeft, DollarSign, Repeat, Zap,
-    TrendingDown, FileUp, Users, Trophy, Sun, Moon, Wifi,
+    TrendingDown, FileUp, Users, Trophy, Sun, Moon, Wifi, Shield,
 } from 'lucide-react'
 import { getThemeColors } from '@/lib/themeColors'
 import GoldText from './GoldText'
@@ -28,6 +28,7 @@ const MENU_KEYS = [
     { key: 'nav.health', icon: Heart, href: '/health' },
     { key: 'nav.budgets', icon: DollarSign, href: '/budgets' },
     { key: 'nav.goals', icon: Target, href: '/goals' },
+    { key: 'nav.emergency_fund', icon: Shield, href: '/emergency-fund' },
     { key: 'nav.subscriptions', icon: Repeat, href: '/subscriptions' },
     { key: 'nav.family', icon: Users, href: '/family' },
     { key: 'nav.achievements', icon: Trophy, href: '/achievements' },
@@ -77,7 +78,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                         <div style={{ width: 32, height: 32, borderRadius: 8, background: TC.goldGrad, flexShrink: 0 }} />
                         {showLabel && (
                             <span style={{ fontSize: 16, fontWeight: 700, color: TC.text, whiteSpace: 'nowrap' }}>
-                                Aurum<GoldText>Fin</GoldText>
+                                Neural Finance <GoldText>Hub</GoldText>
                             </span>
                         )}
                     </Link>
@@ -198,7 +199,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                         <Menu size={22} />
                     </button>
                     <Link href="/dashboard" style={{ textDecoration: 'none', fontWeight: 700, color: TC.text }}>
-                        Aurum<GoldText>Fin</GoldText>
+                        Neural Finance <GoldText>Hub</GoldText>
                     </Link>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}

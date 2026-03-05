@@ -109,7 +109,7 @@
         background-size: 50px 50px;
     }
 
-    /* ===== 3D CARD (MetaFin effect + AurumFinance palette) ===== */
+    /* ===== 3D CARD (MetaFin effect + Neural Finance Hub palette) ===== */
     .card-3d {
         position: relative;
         border: 1px solid hsl(40 65% 55% / 0.06);
@@ -228,6 +228,20 @@
 
     .glow-gold-pulse {
         animation: gold-pulse 3s ease-in-out infinite;
+    }
+
+    @keyframes spin {
+        from {
+            transform: rotate(0deg);
+        }
+
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    .animate-spin {
+        animation: spin 1s linear infinite;
     }
 }
 

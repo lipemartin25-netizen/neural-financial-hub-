@@ -2,25 +2,25 @@ import { fmt } from '@/lib/theme'
 
 // ========== CSV Export ==========
 export function downloadCSV(filename: string, headers: string[], rows: string[][]) {
-    const BOM = '\uFEFF' // UTF-8 BOM para Excel BR
-    const csv = BOM + [
-        headers.join(';'),
-        ...rows.map(r => r.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(';')),
-    ].join('\n')
+  const BOM = '\uFEFF' // UTF-8 BOM para Excel BR
+  const csv = BOM + [
+    headers.join(';'),
+    ...rows.map(r => r.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(';')),
+  ].join('\n')
 
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `${filename}.csv`
-    a.click()
-    URL.revokeObjectURL(url)
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `${filename}.csv`
+  a.click()
+  URL.revokeObjectURL(url)
 }
 
 // ========== PDF Export (lightweight — sem lib externa) ==========
 export function downloadPDFReport(title: string, sections: Array<{ heading: string; rows: string[][] }>) {
-    // Gera HTML → abre janela de impressão nativa (funciona em qualquer browser)
-    const styles = `
+  // Gera HTML → abre janela de impressão nativa (funciona em qualquer browser)
+  const styles = `
     <style>
       * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
       body { padding: 40px; color: #1a1a1a; }
@@ -36,44 +36,44 @@ export function downloadPDFReport(title: string, sections: Array<{ heading: stri
     </style>
   `
 
-    const now = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })
+  const now = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })
 
-    const sectionHTML = sections.map(s => {
-        if (s.rows.length === 0) return ''
-        const headers = s.rows[0]
-        const data = s.rows.slice(1)
-        return `
+  const sectionHTML = sections.map(s => {
+    if (s.rows.length === 0) return ''
+    const headers = s.rows[0]
+    const data = s.rows.slice(1)
+    return `
       <h2>${s.heading}</h2>
       <table>
         <thead><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead>
         <tbody>${data.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join('')}</tr>`).join('')}</tbody>
       </table>
     `
-    }).join('')
+  }).join('')
 
-    const html = `
+  const html = `
     <!DOCTYPE html><html><head><meta charset="utf-8"><title>${title}</title>${styles}</head>
     <body>
       <h1>${title}</h1>
-      <p class="subtitle">Gerado em ${now} — AurumFin / NeuraFin Hub</p>
+      <p class="subtitle">Gerado em ${now} — Neural Finance Hub</p>
       ${sectionHTML}
-      <p class="footer">Relatório gerado automaticamente pelo NeuraFin Hub</p>
+      <p class="footer">Relatório gerado automaticamente pelo Neural Finance Hub</p>
     </body></html>
   `
 
-    const win = window.open('', '_blank')
-    if (win) {
-        win.document.write(html)
-        win.document.close()
-        setTimeout(() => win.print(), 500)
-    }
+  const win = window.open('', '_blank')
+  if (win) {
+    win.document.write(html)
+    win.document.close()
+    setTimeout(() => win.print(), 500)
+  }
 }
 
 // ========== Helpers ==========
 export function formatDateBR(d: string) {
-    return new Date(d + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  return new Date(d + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
 export function fmtPlain(v: number) {
-    return v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  return v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }

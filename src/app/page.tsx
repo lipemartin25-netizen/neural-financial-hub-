@@ -69,7 +69,7 @@ function Navbar() {
                 <a href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
                     <div style={{ width: 32, height: 32, borderRadius: 8, background: C.goldGrad }} />
                     <span style={{ fontSize: 18, fontWeight: 700, color: C.text }}>
-                        Aurum<GoldText>Finance</GoldText>
+                        Neural Finance <GoldText>Hub</GoldText>
                     </span>
                 </a>
 
@@ -361,7 +361,7 @@ function CTA() {
                         Pronto para transformar{' '}<GoldText>suas finanças?</GoldText>
                     </h2>
                     <p style={{ maxWidth: 560, margin: '24px auto 0', color: C.textMuted }}>
-                        Junte-se a milhares de pessoas que já confiam na Aurum Finance para alcançar a liberdade financeira.
+                        Junte-se a milhares de pessoas que já confiam no Neural Finance Hub para alcançar a liberdade financeira.
                     </p>
                     <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: 16, marginTop: 40 }}>
                         <a href="/register" className="btn-gold" style={{ padding: '12px 32px', fontSize: 16, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
@@ -389,14 +389,14 @@ function Footer() {
             <div style={{ maxWidth: 1152, margin: '0 auto', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '0 24px' }}>
                 <a href="/" style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
                     <div style={{ width: 24, height: 24, borderRadius: 6, background: C.goldGrad }} />
-                    <span style={{ fontSize: 14, fontWeight: 700, color: C.text }}>Aurum<GoldText>Finance</GoldText></span>
+                    <span style={{ fontSize: 14, fontWeight: 700, color: C.text }}>Neural Finance <GoldText>Hub</GoldText></span>
                 </a>
                 <div style={{ display: 'flex', gap: 24, fontSize: 14, color: C.textMuted }}>
                     <a href="#" style={{ color: 'inherit', textDecoration: 'none' }}>Termos</a>
                     <a href="#" style={{ color: 'inherit', textDecoration: 'none' }}>Privacidade</a>
                     <a href="#" style={{ color: 'inherit', textDecoration: 'none' }}>Contato</a>
                 </div>
-                <p style={{ fontSize: 12, color: C.textMuted }}>© 2026 Aurum Finance. Todos os direitos reservados.</p>
+                <p style={{ fontSize: 12, color: C.textMuted }}>© 2026 Neural Finance Hub. Todos os direitos reservados.</p>
             </div>
         </footer>
     )

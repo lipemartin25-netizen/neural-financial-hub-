@@ -31,8 +31,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     // Carregar do localStorage ao montar
     useEffect(() => {
-        const storedLocale = localStorage.getItem('aurumfin-locale') as Locale | null
-        const storedTheme = localStorage.getItem('aurumfin-theme') as Theme | null
+        const storedLocale = localStorage.getItem('neuralfinance-locale') as Locale | null
+        const storedTheme = localStorage.getItem('neuralfinance-theme') as Theme | null
         if (storedLocale) setLocaleState(storedLocale)
         if (storedTheme) setThemeState(storedTheme)
         setMounted(true)
@@ -61,7 +61,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     const setLocale = useCallback((l: Locale) => {
         setLocaleState(l)
-        localStorage.setItem('aurumfin-locale', l)
+        localStorage.setItem('neuralfinance-locale', l)
         // Salvar no perfil (fire and forget)
         fetch('/api/profile', {
             method: 'PATCH',
@@ -72,7 +72,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     const setTheme = useCallback((t: Theme) => {
         setThemeState(t)
-        localStorage.setItem('aurumfin-theme', t)
+        localStorage.setItem('neuralfinance-theme', t)
         fetch('/api/profile', {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },

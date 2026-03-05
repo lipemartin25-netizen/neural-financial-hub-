@@ -1,65 +1,61 @@
-const PLUGGY_CLIENT_ID = process.env.PLUGGY_CLIENT_ID ?? ''
-const PLUGGY_CLIENT_SECRET = process.env.PLUGGY_CLIENT_SECRET ?? ''
-const PLUGGY_API = 'https://api.pluggy.ai'
-let cachedToken: { token: string; expiresAt: number } | null = null
-export async function getPluggyToken(): Promise<string> {
-    if (cachedToken && cachedToken.expiresAt > Date.now() + 60000) {
-        return cachedToken.token
+import { PluggyClient } from 'pluggy-sdk'
+
+let client: PluggyClient | null = null
+
+export function getPluggyClient(): PluggyClient {
+    if (!client) {
+        client = new PluggyClient({
+            clientId: process.env.PLUGGY_CLIENT_ID!,
+            clientSecret: process.env.PLUGGY_CLIENT_SECRET!,
+        })
     }
-    const res = await fetch(`${PLUGGY_API}/auth`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            clientId: PLUGGY_CLIENT_ID,
-            clientSecret: PLUGGY_CLIENT_SECRET,
-        }),
-    })
-    if (!res.ok) throw new Error('Failed to authenticate with Pluggy')
-    const data = await res.json()
-    cachedToken = {
-        token: data.apiKey,
-        expiresAt: Date.now() + 3600000, // 1h
-    }
-    return cachedToken.token
+    return client
 }
-export async function createConnectToken(userId: string): Promise<string> {
-    const token = await getPluggyToken()
-    const res = await fetch(`${PLUGGY_API}/connect_token`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-API-KEY': token,
-        },
-        body: JSON.stringify({
-            clientUserId: userId,
-        }),
-    })
-    if (!res.ok) throw new Error('Failed to create connect token')
-    const data = await res.json()
-    return data.accessToken
+
+// Helpers para compatibilidade com código legado
+export async function createConnectToken(userId?: string) {
+    return getPluggyClient().createConnectToken(userId)
 }
+
 export async function fetchAccounts(itemId: string) {
-    const token = await getPluggyToken()
-    const res = await fetch(`${PLUGGY_API}/accounts?itemId=${itemId}`, {
-        headers: { 'X-API-KEY': token },
-    })
-    if (!res.ok) throw new Error('Failed to fetch accounts')
-    return res.json()
+    return getPluggyClient().fetchAccounts(itemId)
 }
-export async function fetchTransactions(accountId: string, from: string, to: string) {
-    const token = await getPluggyToken()
-    const res = await fetch(
-        `${PLUGGY_API}/transactions?accountId=${accountId}&from=${from}&to=${to}&pageSize=500`,
-        { headers: { 'X-API-KEY': token } }
-    )
-    if (!res.ok) throw new Error('Failed to fetch transactions')
-    return res.json()
+
+export async function fetchTransactions(accountId: string, filters: { from?: string, to?: string, pageSize?: number, page?: number } = {}) {
+    return getPluggyClient().fetchTransactions(accountId, filters)
 }
+
 export async function fetchItem(itemId: string) {
-    const token = await getPluggyToken()
-    const res = await fetch(`${PLUGGY_API}/items/${itemId}`, {
-        headers: { 'X-API-KEY': token },
-    })
-    if (!res.ok) throw new Error('Failed to fetch item')
-    return res.json()
+    return getPluggyClient().fetchItem(itemId)
+}
+
+export async function fetchInvoices(accountId: string, from?: string, to?: string) {
+    return getPluggyClient().fetchInvoices(accountId, { from, to })
+}
+
+/**
+ * Mapeia categorias do Pluggy para as categorias internas do Neural Finance Hub
+ */
+export function mapPluggyCategory(pluggyCategory?: string | null): string {
+    if (!pluggyCategory) return 'other_expense'
+
+    const cat = pluggyCategory.toLowerCase()
+
+    // Mapeamento (Exemplos comuns do Pluggy)
+    if (cat.includes('food') || cat.includes('alimentação') || cat.includes('restaurante')) return 'food'
+    if (cat.includes('transport') || cat.includes('transporte') || cat.includes('viagem') || cat.includes('combustível')) return 'transport'
+    if (cat.includes('housing') || cat.includes('moradia') || cat.includes('aluguel') || cat.includes('casa')) return 'housing'
+    if (cat.includes('health') || cat.includes('saúde') || cat.includes('farmácia')) return 'health'
+    if (cat.includes('education') || cat.includes('educação')) return 'education'
+    if (cat.includes('entertainment') || cat.includes('lazer') || cat.includes('streaming')) return 'entertainment'
+    if (cat.includes('shopping') || cat.includes('compras') || cat.includes('e-commerce')) return 'shopping'
+    if (cat.includes('service') || cat.includes('assinatura') || cat.includes('subscriptions')) return 'subscriptions'
+    if (cat.includes('utilities') || cat.includes('contas') || cat.includes('luz') || cat.includes('água')) return 'utilities'
+    if (cat.includes('insurance') || cat.includes('seguro')) return 'insurance'
+    if (cat.includes('pet')) return 'pets'
+    if (cat.includes('personal') || cat.includes('cuidados pessoais')) return 'personal'
+    if (cat.includes('salary') || cat.includes('salário') || cat.includes('income') || cat.includes('receita')) return 'salary'
+    if (cat.includes('investment') || cat.includes('investimento')) return 'investments_return'
+
+    return 'other_expense'
 }

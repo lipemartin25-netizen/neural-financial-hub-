@@ -36,6 +36,9 @@ export async function POST(request: Request) {
             budgetsRes,
             boletosRes,
             cardsRes,
+            assetsRes,
+            liabilitiesRes,
+            retirementRes,
         ] = await Promise.all([
             supabase
                 .from('profiles')
@@ -70,8 +73,9 @@ export async function POST(request: Request) {
                 .eq('is_active', true),
             supabase
                 .from('budgets')
-                .select('category_id, amount, categories(name)')
-                .eq('user_id', user.id),
+                .select('category_id, planned_amount, categories(name)')
+                .eq('user_id', user.id)
+                .eq('month', firstDay),
             supabase
                 .from('boletos')
                 .select('description, amount, due_date, status')
@@ -85,17 +89,23 @@ export async function POST(request: Request) {
                 .eq('user_id', user.id)
                 .eq('type', 'credit_card')
                 .eq('is_active', true),
+            supabase.from('assets').select('*').eq('user_id', user.id),
+            supabase.from('liabilities').select('*').eq('user_id', user.id),
+            supabase.from('retirement_plans').select('*').eq('user_id', user.id).single(),
         ])
 
-        const profile = profileRes.data
-        const accounts = accountsRes.data ?? []
-        const txThisMonth = txThisMonthRes.data ?? []
-        const txLastMonth = txLastMonthRes.data ?? []
-        const goals = goalsRes.data ?? []
-        const investments = investmentsRes.data ?? []
-        const budgets = budgetsRes.data ?? []
-        const boletos = boletosRes.data ?? []
-        const cards = cardsRes.data ?? []
+        const profile = profileRes.data as any
+        const accounts = (accountsRes.data ?? []) as any[]
+        const txThisMonth = (txThisMonthRes.data ?? []) as any[]
+        const txLastMonth = (txLastMonthRes.data ?? []) as any[]
+        const goals = (goalsRes.data ?? []) as any[]
+        const investments = (investmentsRes.data ?? []) as any[]
+        const budgets = (budgetsRes.data ?? []) as any[]
+        const boletos = (boletosRes.data ?? []) as any[]
+        const cards = (cardsRes.data ?? []) as any[]
+        const assets = (assetsRes.data ?? []) as any[]
+        const liabilities = (liabilitiesRes.data ?? []) as any[]
+        const retirement = retirementRes.data as any
 
         // ========== Processar dados ==========
         const totalBalance = accounts
@@ -163,7 +173,7 @@ export async function POST(request: Request) {
             ? budgets.map(b => {
                 const catName = (b.categories as { name?: string } | null)?.name ?? b.category_id
                 const spent = spentByCategory[b.category_id] ?? 0
-                const limit = Number(b.amount)
+                const limit = Number(b.planned_amount)
                 const pct = limit > 0 ? Math.round((spent / limit) * 100) : 0
                 const status = pct > 100 ? '🔴 ESTOURADO' : pct > 80 ? '🟡 ATENÇÃO' : '🟢 OK'
                 return `${catName}: R$ ${spent.toFixed(2)} / R$ ${limit.toFixed(2)} (${pct}%) ${status}`
@@ -183,6 +193,31 @@ export async function POST(request: Request) {
             ? cards.map(c => `${c.name}: Limite R$ ${Number(c.credit_limit ?? 0).toFixed(2)}, fecha dia ${c.closing_day}, vence dia ${c.due_day}`).join('\n  ')
             : 'Nenhum cartão cadastrado'
 
+        // Patrimônio (Ativos e Passivos Novo)
+        const assetsSummary = assets.length > 0
+            ? assets.map(a => `${a.name} (${a.type}): R$ ${Number(a.estimated_value).toFixed(2)}`).join('\n  ')
+            : 'Sem ativos detalhados'
+
+        const liabilitiesSummary = liabilities.length > 0
+            ? liabilities.map(l => `${l.name}: Saldo devedor R$ ${Number(l.remaining_amount).toFixed(2)} / Total R$ ${Number(l.total_amount).toFixed(2)}`).join('\n  ')
+            : 'Sem passivos/dívidas'
+
+        const totalAssetsVal = assets.reduce((s, a) => s + Number(a.estimated_value), 0)
+        const totalLiabilitiesVal = liabilities.reduce((s, l) => s + Number(l.remaining_amount), 0)
+        const netWorth = (totalBalance + totalAssetsVal) - totalLiabilitiesVal
+
+        // Reserva de Emergência
+        const liquidTypes = ['checking', 'savings', 'cash', 'wallet']
+        const totalLiquid = accounts.filter(a => liquidTypes.includes(a.type)).reduce((s, a) => s + Number(a.balance), 0)
+        const avgExp = lastMonthExpense || monthExpense || 2000
+        const emergencyCoverage = totalLiquid / avgExp
+        const emergencySummary = `Saldo Líquido: R$ ${totalLiquid.toFixed(2)}. Cobertura: ${emergencyCoverage.toFixed(1)} meses de despesas média.`
+
+        // Aposentadoria
+        const retirementSummary = retirement ?
+            `Plano: Aposentar com ${retirement.target_retirement_age} anos. Gastos mensais alvo: R$ ${Number(retirement.monthly_expenses).toFixed(2)}. Contribuição: R$ ${Number(retirement.monthly_contribution).toFixed(2)}/mês.`
+            : 'Plano de aposentadoria não configurado'
+
         // Contas
         const accountsSummary = accounts
             .map(a => `${a.name} (${a.type}): R$ ${Number(a.balance).toFixed(2)}${a.type === 'credit_card' ? ` | Limite: R$ ${Number(a.credit_limit ?? 0).toFixed(2)}` : ''}`)
@@ -196,8 +231,8 @@ export async function POST(request: Request) {
         const monthName = now.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
 
         // ========== System Instruction COMPLETA ==========
-        const systemInstruction = `Você é a **NeuraFin IA**, assistente financeiro pessoal inteligente e premium do app NeuraFin Hub.
-Seu nome é NeuraFin IA (NÃO Nexus). Você é sofisticada, empática e altamente analítica.
+        const systemInstruction = `Você é a **Neural IA**, assistente financeiro pessoal inteligente e premium do app Neural Finance Hub.
+Seu nome é Neural IA (NÃO Nexus). Você é sofisticada, empática e altamente analítica.
 
 👤 PERFIL DO USUÁRIO:
 - Nome: ${profile?.full_name ?? 'Usuário'}
@@ -207,9 +242,17 @@ Seu nome é NeuraFin IA (NÃO Nexus). Você é sofisticada, empática e altament
 - Objetivo financeiro: ${profile?.financial_goal ?? 'Não definido'}
 
 💰 PATRIMÔNIO E CONTAS (${monthName}):
-- Patrimônio total (sem cartões): R$ ${totalBalance.toFixed(2)}
-- Contas:
+- Patrimônio Líquido (Consolidado): R$ ${netWorth.toFixed(2)}
+- Reserva de Emergência: ${emergencySummary}
+- Ativos Detalhados:
+  ${assetsSummary}
+- Passivos / Dívidas:
+  ${liabilitiesSummary}
+- Contas Bancárias:
   ${accountsSummary || 'Nenhuma conta'}
+
+📊 APOSENTADORIA:
+  ${retirementSummary}
 
 📊 FLUXO DO MÊS ATUAL (${monthName}):
 - Receitas: R$ ${monthIncome.toFixed(2)}
@@ -255,7 +298,7 @@ INSTRUÇÕES DE COMPORTAMENTO:
 9. Se dados estão faltando (ex: sem investimentos), sugira ao usuário cadastrar
 10. Seja proativa: se detectar problemas (orçamento estourado, pouca diversificação), alerte
 11. Nunca exponha dados técnicos como IDs, tokens ou estrutura interna
-12. Se o usuário perguntar quem te criou, diga que foi a equipe NeuraFin
+12. Se o usuário perguntar quem te criou, diga que foi a equipe Neural Finance Hub
 13. Use Markdown para formatação (negrito, listas, etc.) quando apropriado
 ═══════════════════════════════════════`
 

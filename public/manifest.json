@@ -1,6 +1,6 @@
 {
-    "name": "AurumFinance — Gestão de Elite",
-    "short_name": "AurumFin",
+    "name": "Neural Finance Hub — Gestão de Elite",
+    "short_name": "Neural Finance",
     "description": "Plataforma premium de gestão financeira pessoal com IA",
     "start_url": "/dashboard",
     "display": "standalone",
@@ -69,7 +69,7 @@
             "sizes": "1280x720",
             "type": "image/png",
             "form_factor": "wide",
-            "label": "Dashboard AurumFinance"
+            "label": "Dashboard Neural Finance Hub"
         }
     ],
     "shortcuts": [

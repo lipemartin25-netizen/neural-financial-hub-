@@ -1,6 +1,6 @@
 // src/lib/ai/prompts.ts
 export const BATCH_CATEGORIZE_PROMPT = `
-Você é o categorizador financeiro do NeuraFin.
+Você é o categorizador financeiro do Neural Finance Hub.
 Receba uma lista de transações bancárias e categorize CADA UMA.
 
 CATEGORIAS DISPONÍVEIS:

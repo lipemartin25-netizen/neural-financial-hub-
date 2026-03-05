@@ -126,6 +126,24 @@ export async function PATCH(request: Request) {
 
         if (error) throw error
 
+        // SE o boleto foi marcado como pago AGORA, criar uma transação correspondente
+        if (updates.status === 'paid') {
+            const accId = updates.account_id || data.account_id
+            if (accId) {
+                await supabase.from('transactions').insert({
+                    user_id: user.id,
+                    account_id: accId,
+                    amount: data.amount,
+                    type: 'expense',
+                    description: `Pagam. Boleto: ${data.beneficiary_name || 'Boleto'}`,
+                    date: updates.payment_date ? updates.payment_date.split('T')[0] : new Date().toISOString().split('T')[0],
+                    category_id: data.category_id,
+                    notes: data.notes,
+                    tags: ['boleto-pago'],
+                })
+            }
+        }
+
         return NextResponse.json({ data })
     } catch (err: unknown) {
         const message = err instanceof Error ? err.message : 'Internal error'

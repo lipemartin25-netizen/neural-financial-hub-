@@ -1,6 +1,8 @@
+
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
 import type { TransactionWithCategory } from '@/types/database'
 
 export type TransactionFilters = {
@@ -18,42 +20,44 @@ export function useTransactions(initialFilters: TransactionFilters = {}) {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [count, setCount] = useState(0)
+    const supabase = createClient()
 
     const fetchTransactions = useCallback(async (filters: TransactionFilters = {}) => {
         setLoading(true)
         setError(null)
 
-        const params = new URLSearchParams()
-        if (filters.type) params.set('type', filters.type)
-        if (filters.account_id) params.set('account_id', filters.account_id)
-        if (filters.category_id) params.set('category_id', filters.category_id)
-        if (filters.date_from) params.set('date_from', filters.date_from)
-        if (filters.date_to) params.set('date_to', filters.date_to)
-        params.set('page', String(filters.page ?? 1))
-        params.set('limit', String(filters.limit ?? 100))
+        let query = supabase
+            .from('transactions')
+            .select('*, categories(id, name, icon, color), accounts(id, name, type, color)', { count: 'exact' })
+            .order('date', { ascending: false })
+            .order('created_at', { ascending: false })
+
+        if (filters.type) query = query.eq('type', filters.type)
+        if (filters.account_id) query = query.eq('account_id', filters.account_id)
+        if (filters.category_id) query = query.eq('category_id', filters.category_id)
+        if (filters.date_from) query = query.gte('date', filters.date_from)
+        if (filters.date_to) query = query.lte('date', filters.date_to)
+
+        const page = filters.page ?? 1
+        const limit = filters.limit ?? 100
+        const offset = (page - 1) * limit
+        query = query.range(offset, offset + limit - 1)
 
         try {
-            const res = await fetch(`/api/transactions?${params.toString()}`)
-            if (!res.ok) {
-                const body = await res.json().catch(() => ({}))
-                throw new Error(body.error || `HTTP ${res.status}`)
-            }
-            const json = await res.json()
-            setTransactions(json.data ?? [])
-            setCount(json.count ?? 0)
-        } catch (err: unknown) {
-            const message = err instanceof Error ? err.message : 'Erro ao carregar transações'
-            setError(message)
-            setTransactions([])
+            const { data, count: total, error: err } = await query
+            if (err) throw err
+            setTransactions((data as any) ?? [])
+            setCount(total ?? 0)
+        } catch (err: any) {
+            setError(err.message)
         } finally {
             setLoading(false)
         }
-    }, [])
+    }, [supabase])
 
     useEffect(() => {
         fetchTransactions(initialFilters)
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [])
+    }, [fetchTransactions, initialFilters])
 
     const createTransaction = useCallback(async (payload: {
         account_id: string
@@ -67,58 +71,83 @@ export function useTransactions(initialFilters: TransactionFilters = {}) {
         tags?: string[] | null
     }) => {
         try {
-            const res = await fetch('/api/transactions', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload),
-            })
-            if (!res.ok) {
-                const body = await res.json().catch(() => ({}))
-                throw new Error(body.error || `HTTP ${res.status}`)
-            }
-            const json = await res.json()
-            // Re-fetch para pegar lista atualizada com joins
+            // 1. Inserir transação
+            const { data: tx, error: txErr } = await supabase
+                .from('transactions')
+                .insert([{
+                    ...payload,
+                    amount: Number(payload.amount),
+                    date: payload.date || new Date().toISOString().split('T')[0]
+                }])
+                .select()
+                .single()
+
+            if (txErr) throw txErr
+
+            // 2. Buscar saldo atual da conta
+            const { data: acc, error: accErr } = await supabase
+                .from('accounts')
+                .select('balance')
+                .eq('id', payload.account_id)
+                .single()
+
+            if (accErr) throw accErr
+
+            // 3. Calcular novo saldo
+            const currentBalance = Number(acc.balance || 0)
+            const amount = Number(payload.amount)
+            const newBalance = payload.type === 'income' ? currentBalance + amount : currentBalance - amount
+
+            // 4. Atualizar saldo direto (REMOVIDO RPC conforme pedido)
+            const { error: upErr } = await supabase
+                .from('accounts')
+                .update({ balance: newBalance })
+                .eq('id', payload.account_id)
+
+            if (upErr) throw upErr
+
             await fetchTransactions(initialFilters)
-            return { data: json.data, error: null }
-        } catch (err: unknown) {
-            const message = err instanceof Error ? err.message : 'Erro ao criar transação'
-            return { data: null, error: message }
+            return { success: true, data: tx, error: null }
+        } catch (err: any) {
+            console.error('Erro ao criar transação:', err)
+            return { success: false, data: null, error: err.message }
         }
-    }, [fetchTransactions, initialFilters])
+    }, [supabase, fetchTransactions, initialFilters])
 
     const deleteTransaction = useCallback(async (id: string) => {
         try {
-            const res = await fetch(`/api/transactions?id=${id}`, { method: 'DELETE' })
-            if (!res.ok) {
-                const body = await res.json().catch(() => ({}))
-                throw new Error(body.error || `HTTP ${res.status}`)
-            }
-            await fetchTransactions(initialFilters)
-            return { error: null }
-        } catch (err: unknown) {
-            const message = err instanceof Error ? err.message : 'Erro ao excluir'
-            return { error: message }
-        }
-    }, [fetchTransactions, initialFilters])
+            // 1. Buscar transação para reverter saldo
+            const { data: tx, error: txErr } = await supabase
+                .from('transactions')
+                .select('amount, type, account_id')
+                .eq('id', id)
+                .single()
 
-    const updateTransaction = useCallback(async (id: string, payload: Record<string, unknown>) => {
-        try {
-            const res = await fetch(`/api/transactions`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id, ...payload }),
-            })
-            if (!res.ok) {
-                const body = await res.json().catch(() => ({}))
-                throw new Error(body.error || `HTTP ${res.status}`)
+            if (txErr) throw txErr
+
+            // 2. Deletar
+            const { error: delErr } = await supabase
+                .from('transactions')
+                .delete()
+                .eq('id', id)
+
+            if (delErr) throw delErr
+
+            // 3. Reverter saldo
+            const { data: acc } = await supabase.from('accounts').select('balance').eq('id', tx.account_id).single()
+            if (acc) {
+                const currentBalance = Number(acc.balance)
+                const amount = Number(tx.amount)
+                const newBalance = tx.type === 'income' ? currentBalance - amount : currentBalance + amount
+                await supabase.from('accounts').update({ balance: newBalance }).eq('id', tx.account_id)
             }
+
             await fetchTransactions(initialFilters)
             return { error: null }
-        } catch (err: unknown) {
-            const message = err instanceof Error ? err.message : 'Erro ao atualizar'
-            return { error: message }
+        } catch (err: any) {
+            return { error: err.message }
         }
-    }, [fetchTransactions, initialFilters])
+    }, [supabase, fetchTransactions, initialFilters])
 
     return {
         transactions,
@@ -127,7 +156,6 @@ export function useTransactions(initialFilters: TransactionFilters = {}) {
         count,
         fetchTransactions,
         createTransaction,
-        updateTransaction,
         deleteTransaction,
     }
 }

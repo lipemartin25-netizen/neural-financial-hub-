@@ -65,7 +65,7 @@ export const LEVEL_TITLES: Record<number, Record<string, string>> = {
     7: { 'pt-BR': 'Expert', en: 'Expert', es: 'Experto' },
     8: { 'pt-BR': 'Mestre', en: 'Master', es: 'Maestro' },
     9: { 'pt-BR': 'Guru Financeiro', en: 'Financial Guru', es: 'Gurú Financiero' },
-    10: { 'pt-BR': 'Lenda Aurum', en: 'Aurum Legend', es: 'Leyenda Aurum' },
+    10: { 'pt-BR': 'Lenda Neural', en: 'Neural Legend', es: 'Leyenda Neural' },
 }
 
 export const BADGES: Badge[] = [
@@ -174,7 +174,7 @@ export const BADGES: Badge[] = [
     },
     {
         id: 'level_10',
-        name: { 'pt-BR': 'Lenda Aurum', en: 'Aurum Legend', es: 'Leyenda Aurum' },
+        name: { 'pt-BR': 'Lenda Neural', en: 'Neural Legend', es: 'Leyenda Neural' },
         description: { 'pt-BR': 'Alcance nível 10', en: 'Reach level 10', es: 'Alcanza el nivel 10' },
         icon: '🏅', category: 'mastery', xpReward: 500, secret: true,
         condition: (s) => s.level >= 10,

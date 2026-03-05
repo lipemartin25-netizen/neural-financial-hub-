@@ -16,7 +16,7 @@ const SUGGESTIONS = [
     '📋 Tenho boletos a vencer?',
 ]
 
-const WELCOME_MSG = `Olá! Sou a **NeuraFin IA** 🧠✨, sua consultora financeira pessoal.
+const WELCOME_MSG = `Olá! Sou a **Neural IA** 🧠✨, sua consultora financeira pessoal.
 
 Tenho acesso completo às suas finanças em tempo real — contas, transações, investimentos, metas, orçamentos e muito mais.
 
@@ -163,7 +163,7 @@ export default function AIPage() {
                             <Sparkles size={18} style={{ color: C.bg }} />
                         </div>
                         <div>
-                            <h1 style={{ fontSize: 24, fontWeight: 700, color: C.text }}>NeuraFin IA</h1>
+                            <h1 style={{ fontSize: 24, fontWeight: 700, color: C.text }}>Neural IA</h1>
                             <p style={{ fontSize: 12, color: C.textMuted }}>Consultora financeira pessoal com dados em tempo real</p>
                         </div>
                     </div>
@@ -376,7 +376,7 @@ export default function AIPage() {
 
             {/* Footer info */}
             <p style={{ fontSize: 11, color: C.textMuted2, textAlign: 'center', marginTop: 8, paddingBottom: 4 }}>
-                NeuraFin IA pode cometer erros. Verifique informações importantes.
+                Neural IA pode cometer erros. Verifique informações importantes.
             </p>
 
             <style jsx>{`

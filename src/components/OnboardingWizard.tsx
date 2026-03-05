@@ -132,7 +132,7 @@ export default function OnboardingWizard({ onComplete }: { onComplete: () => voi
                                 <Sparkles size={28} style={{ color: C.bg }} />
                             </div>
                             <h2 style={{ fontSize: 22, fontWeight: 700, color: C.text, marginBottom: 8 }}>
-                                Bem-vindo ao <GoldText>AurumFin</GoldText>!
+                                Bem-vindo ao <GoldText>Neural Finance Hub</GoldText>!
                             </h2>
                             <p style={{ fontSize: 14, color: C.textMuted, lineHeight: 1.6, marginBottom: 32 }}>
                                 Vamos configurar sua conta em 3 passos rápidos para você começar a ter controle total das suas finanças.

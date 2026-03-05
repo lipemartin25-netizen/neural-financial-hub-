@@ -372,7 +372,7 @@ export default function SettingsPage() {
                         { key: 'budget' as const, label: 'Orçamento estourado', desc: 'Alerta ao ultrapassar 80% do limite', icon: '💰' },
                         { key: 'goals' as const, label: 'Progresso de metas', desc: 'Atualizações semanais de progresso', icon: '🎯' },
                         { key: 'weekly' as const, label: 'Resumo semanal', desc: 'Relatório toda segunda-feira', icon: '📊' },
-                        { key: 'aiTips' as const, label: 'Dicas da IA', desc: 'Insights personalizados da NeuraFin IA', icon: '🤖' },
+                        { key: 'aiTips' as const, label: 'Dicas da IA', desc: 'Insights personalizados da Neural IA', icon: '🤖' },
                     ]).map((n, i, arr) => (
                         <div key={n.key} style={{
                             display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 0',

@@ -152,7 +152,7 @@ const Settings = () => {
                     {activeTab === "appearance" && (
                         <>
                             <h3 className="text-lg font-semibold text-foreground">Aparência</h3>
-                            <p className="text-sm text-muted-foreground">Tema atual: <span className="font-medium text-gold">Dark Gold (AurumFinance)</span></p>
+                            <p className="text-sm text-muted-foreground">Tema atual: <span className="font-medium text-gold">Dark Gold (Neural Finance Hub)</span></p>
                             <div className="grid grid-cols-3 gap-3">
                                 {[
                                     { name: "Dark Gold", colors: ["#0d0f12", "#C9A858"], active: true },

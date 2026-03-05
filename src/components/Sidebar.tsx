@@ -20,9 +20,10 @@ const MENU = [
     {
         group: "Análise", items: [
             { name: "Investimentos", path: "/investments", icon: TrendingUp },
-            { name: "Patrimônio", path: "/patrimony", icon: Wallet },
-            { name: "Saúde", path: "/health", icon: Activity },
-            { name: "Relatórios", path: "/reports", icon: BarChart3 },
+            { name: "Patrimônio", path: "/patrimonio", icon: Wallet },
+            { name: "Orçamentos", path: "/budgets", icon: BarChart3 },
+            { name: "Relatórios", path: "/reports", icon: Activity },
+            { name: "Aposentadoria", path: "/aposentadoria", icon: Sparkles },
         ]
     },
     {
@@ -50,7 +51,7 @@ const Sidebar = () => {
                 </div>
                 {!collapsed && (
                     <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-lg font-bold text-white">
-                        Aurum<span className="text-gold">Finance</span>
+                        Neural <span className="text-gold">Finance Hub</span>
                     </motion.span>
                 )}
             </div>

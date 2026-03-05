@@ -1,86 +1,209 @@
 'use client'
-
 import { motion } from 'framer-motion'
 import {
-    Download, ArrowUpRight, ArrowDownRight, PieChart, TrendingUp,
-    TrendingDown, Wallet, BarChart3, Loader2, Calendar, DollarSign,
-    Minus, Activity,
+    BarChart3, PieChart, TrendingUp, TrendingDown, Download,
+    RefreshCw, Loader2, ArrowUpRight, ArrowDownRight, FileText,
+    FileSpreadsheet, Calendar, ChevronLeft, ChevronRight, Filter,
+    Sparkles, AlertTriangle, CheckCircle2,
 } from 'lucide-react'
-import { useState, useEffect, useCallback } from 'react'
-import { C, cardStyle, cardHlStyle, btnGoldStyle, btnOutlineStyle, fmt } from '@/lib/theme'
+import { useState, useMemo, useEffect, useCallback } from 'react'
+import { C, cardStyle, cardHlStyle, btnGoldStyle, btnOutlineStyle, fmt, NAV_SAFE_AREA } from '@/lib/theme'
+import { useApp } from '@/contexts/AppContext'
+import { getThemeColors } from '@/lib/themeColors'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
+import GoldText from '@/components/GoldText'
+import { downloadCSV, downloadPDFReport, formatDateBR, fmtPlain } from '@/lib/export'
 
-type MonthlyStat = { income: number; expense: number; label: string }
-type CategoryItem = { id: string; name: string; icon: string; color: string; amount: number; pct: number }
-type TopExpense = { description: string; amount: number; date: string; category_name: string; category_color: string; category_icon: string }
-type DailyItem = { date: string; label: string; expense: number; income: number }
-type Summary = {
-    currentIncome: number; currentExpense: number; currentSaving: number
-    prevIncome: number; prevExpense: number; prevSaving: number
-    patrimony: number; avgIncome: number; avgExpense: number
-    savingRate: number; monthlyIncome: number | null
-}
-
+type MonthlyRow = { month: string; income: number; expenses: number }
+type CategoryRow = { name: string; icon: string; total: number }
 type ReportData = {
-    monthly: MonthlyStat[]
-    categoryBreakdown: CategoryItem[]
-    topExpenses: TopExpense[]
-    dailyChart: DailyItem[]
-    summary: Summary
-    period: { months: number; currentMonth: string }
+    monthly: MonthlyRow[]
+    categories: CategoryRow[]
 }
 
-const PERIOD_OPTIONS = [
-    { value: 3, label: '3 meses' },
-    { value: 6, label: '6 meses' },
-    { value: 12, label: '12 meses' },
-]
-
-// ========== Variação helper ==========
-function Variation({ current, previous, invert }: { current: number; previous: number; invert?: boolean }) {
-    if (previous === 0) return <span style={{ fontSize: 11, color: C.textMuted }}>—</span>
-    const diff = current - previous
-    const pct = ((diff / previous) * 100).toFixed(1)
-    const isPositive = invert ? diff <= 0 : diff >= 0
-    const color = isPositive ? C.emerald : C.red
-    const Icon = diff >= 0 ? ArrowUpRight : ArrowDownRight
-
-    return (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-            <Icon size={12} style={{ color }} />
-            <span style={{ fontSize: 11, color }}>{pct}% vs anterior</span>
-        </div>
-    )
+/* ── Helpers ── */
+function monthLabel(ym: string): string {
+    const [y, m] = ym.split('-')
+    const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
+    return `${months[parseInt(m) - 1]}/${y.slice(2)}`
 }
 
-export default function ReportsPage() {
+function fullMonthLabel(ym: string): string {
+    const d = new Date(`${ym}-15T12:00:00`)
+    return d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+}
+
+function ReportsContent() {
+    const { theme } = useApp()
+    const TC = getThemeColors(theme)
     const [data, setData] = useState<ReportData | null>(null)
     const [loading, setLoading] = useState(true)
-    const [months, setMonths] = useState(6)
+    const [hoveredBar, setHoveredBar] = useState<number | null>(null)
+    const [showExportMenu, setShowExportMenu] = useState(false)
 
     const fetchData = useCallback(async () => {
         setLoading(true)
         try {
-            const res = await fetch(`/api/reports?months=${months}`)
+            const res = await fetch('/api/reports')
             if (!res.ok) throw new Error()
             const json = await res.json()
-            setData(json.data)
+            setData(json)
         } catch {
             setData(null)
         } finally {
             setLoading(false)
         }
-    }, [months])
+    }, [])
 
     useEffect(() => { fetchData() }, [fetchData])
 
-    // ========== Loading ==========
+    // ── Computed ──
+    const currentMonth = useMemo(() => {
+        if (!data?.monthly?.length) return null
+        return data.monthly[data.monthly.length - 1]
+    }, [data])
+
+    const prevMonth = useMemo(() => {
+        if (!data?.monthly || data.monthly.length < 2) return null
+        return data.monthly[data.monthly.length - 2]
+    }, [data])
+
+    const savingsRate = useMemo(() => {
+        if (!currentMonth || currentMonth.income === 0) return 0
+        return ((currentMonth.income - currentMonth.expenses) / currentMonth.income) * 100
+    }, [currentMonth])
+
+    const prevSavingsRate = useMemo(() => {
+        if (!prevMonth || prevMonth.income === 0) return 0
+        return ((prevMonth.income - prevMonth.expenses) / prevMonth.income) * 100
+    }, [prevMonth])
+
+    const expenseChange = useMemo(() => {
+        if (!currentMonth || !prevMonth || prevMonth.expenses === 0) return 0
+        return ((currentMonth.expenses - prevMonth.expenses) / prevMonth.expenses) * 100
+    }, [currentMonth, prevMonth])
+
+    const incomeChange = useMemo(() => {
+        if (!currentMonth || !prevMonth || prevMonth.income === 0) return 0
+        return ((currentMonth.income - prevMonth.income) / prevMonth.income) * 100
+    }, [currentMonth, prevMonth])
+
+    const totalCategories = useMemo(() => {
+        if (!data?.categories) return 0
+        return data.categories.reduce((s, c) => s + c.total, 0)
+    }, [data])
+
+    const maxMonthlyValue = useMemo(() => {
+        if (!data?.monthly) return 1
+        return Math.max(...data.monthly.map(m => Math.max(m.income, m.expenses)), 1)
+    }, [data])
+
+    // ── 12-month averages ──
+    const avgIncome = useMemo(() => {
+        if (!data?.monthly?.length) return 0
+        return data.monthly.reduce((s, m) => s + m.income, 0) / data.monthly.length
+    }, [data])
+
+    const avgExpense = useMemo(() => {
+        if (!data?.monthly?.length) return 0
+        return data.monthly.reduce((s, m) => s + m.expenses, 0) / data.monthly.length
+    }, [data])
+
+    const avgSavings = avgIncome - avgExpense
+
+    // ── Savings rate trend (últimos 6 meses) ──
+    const savingsTrend = useMemo(() => {
+        if (!data?.monthly) return []
+        return data.monthly.slice(-6).map(m => ({
+            month: monthLabel(m.month),
+            rate: m.income > 0 ? ((m.income - m.expenses) / m.income) * 100 : 0,
+            balance: m.income - m.expenses,
+        }))
+    }, [data])
+
+    // ── Export Handlers ──
+    const handleExportCSV = useCallback(() => {
+        if (!data) return
+        setShowExportMenu(false)
+        // Fluxo mensal
+        const headers = ['Mês', 'Receitas', 'Despesas', 'Saldo', 'Taxa Poupança']
+        const rows = data.monthly.map(m => [
+            fullMonthLabel(m.month),
+            fmtPlain(m.income),
+            fmtPlain(m.expenses),
+            fmtPlain(m.income - m.expenses),
+            `${m.income > 0 ? ((m.income - m.expenses) / m.income * 100).toFixed(1) : '0'}%`,
+        ])
+        downloadCSV('relatorio-financeiro', headers, rows)
+    }, [data])
+
+    const handleExportCategoriesCSV = useCallback(() => {
+        if (!data) return
+        setShowExportMenu(false)
+        const headers = ['Categoria', 'Valor', '% do Total']
+        const rows = data.categories.map(c => [
+            c.name,
+            fmtPlain(c.total),
+            `${totalCategories > 0 ? ((c.total / totalCategories) * 100).toFixed(1) : '0'}%`,
+        ])
+        downloadCSV('gastos-por-categoria', headers, rows)
+    }, [data, totalCategories])
+
+    const handleExportPDF = useCallback(() => {
+        if (!data) return
+        setShowExportMenu(false)
+        const sections = [
+            {
+                heading: 'Fluxo de Caixa Mensal',
+                rows: [
+                    ['Mês', 'Receitas (R$)', 'Despesas (R$)', 'Saldo (R$)', 'Poupança (%)'],
+                    ...data.monthly.map(m => [
+                        fullMonthLabel(m.month),
+                        fmtPlain(m.income),
+                        fmtPlain(m.expenses),
+                        fmtPlain(m.income - m.expenses),
+                        `${m.income > 0 ? ((m.income - m.expenses) / m.income * 100).toFixed(1) : '0'}%`,
+                    ]),
+                ],
+            },
+            {
+                heading: 'Gastos por Categoria (Mês Atual)',
+                rows: [
+                    ['Categoria', 'Valor (R$)', '% do Total'],
+                    ...data.categories.map(c => [
+                        `${c.icon} ${c.name}`,
+                        fmtPlain(c.total),
+                        `${totalCategories > 0 ? ((c.total / totalCategories) * 100).toFixed(1) : '0'}%`,
+                    ]),
+                ],
+            },
+            {
+                heading: 'Resumo',
+                rows: [
+                    ['Indicador', 'Valor'],
+                    ['Receita Média Mensal', `R$ ${fmtPlain(avgIncome)}`],
+                    ['Despesa Média Mensal', `R$ ${fmtPlain(avgExpense)}`],
+                    ['Economia Média Mensal', `R$ ${fmtPlain(avgSavings)}`],
+                    ['Taxa de Poupança Atual', `${savingsRate.toFixed(1)}%`],
+                ],
+            },
+        ]
+        downloadPDFReport('Relatório Financeiro — Neural Finance Hub', sections)
+    }, [data, totalCategories, avgIncome, avgExpense, avgSavings, savingsRate])
+
+    // ── Styles ──
+    const compactCard: React.CSSProperties = { ...cardStyle, borderRadius: 12 }
+    const compactBtn: React.CSSProperties = { ...btnGoldStyle, padding: '8px 16px', fontSize: 13 }
+    const compactBtnOut: React.CSSProperties = { ...btnOutlineStyle, padding: '8px 16px', fontSize: 13 }
+
+    // ── Loading ──
     if (loading) {
         return (
-            <div>
-                <h1 style={{ fontSize: 24, fontWeight: 700, color: C.text, marginBottom: 8 }}>Relatórios</h1>
-                <p style={{ fontSize: 14, color: C.textMuted, marginBottom: 24 }}>Carregando análise...</p>
-                <div style={{ ...cardStyle, padding: 80, display: 'flex', justifyContent: 'center' }}>
-                    <Loader2 size={32} style={{ color: C.gold, animation: 'spin 1s linear infinite' }} />
+            <div style={{ paddingBottom: NAV_SAFE_AREA }}>
+                <h1 style={{ fontSize: 20, fontWeight: 700, color: TC.text, marginBottom: 8 }}>Relatórios</h1>
+                <p style={{ fontSize: 13, color: TC.textMuted, marginBottom: 24 }}>Analisando seus dados...</p>
+                <div style={{ ...compactCard, padding: 80, display: 'flex', justifyContent: 'center' }}>
+                    <Loader2 size={32} style={{ color: TC.gold, animation: 'spin 1s linear infinite' }} />
                 </div>
                 <style jsx>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
             </div>
@@ -89,370 +212,451 @@ export default function ReportsPage() {
 
     if (!data) {
         return (
-            <div>
-                <h1 style={{ fontSize: 24, fontWeight: 700, color: C.text }}>Relatórios</h1>
-                <div style={{ ...cardStyle, padding: 40, textAlign: 'center', marginTop: 24 }}>
-                    <p style={{ color: C.textMuted }}>Erro ao carregar relatórios. Tente novamente.</p>
-                    <button onClick={fetchData} style={{ ...btnOutlineStyle, marginTop: 16 }}>Tentar novamente</button>
+            <div style={{ paddingBottom: NAV_SAFE_AREA }}>
+                <h1 style={{ fontSize: 20, fontWeight: 700, color: TC.text }}>Relatórios</h1>
+                <div style={{ ...compactCard, padding: 40, textAlign: 'center', marginTop: 24 }}>
+                    <p style={{ color: TC.textMuted }}>Erro ao carregar relatórios.</p>
+                    <button onClick={fetchData} style={{ ...compactBtnOut, marginTop: 16 }}>Tentar novamente</button>
                 </div>
             </div>
         )
     }
 
-    const { monthly, categoryBreakdown, topExpenses, dailyChart, summary } = data
-    const maxBarMonthly = Math.max(...monthly.map(d => Math.max(d.income, d.expense)), 1)
-    const maxDaily = Math.max(...dailyChart.map(d => Math.max(d.expense, d.income)), 1)
-
     return (
-        <div>
-            {/* ========== Header ========== */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 16 }}>
-                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-                    <h1 style={{ fontSize: 24, fontWeight: 700, color: C.text }}>Relatórios</h1>
-                    <p style={{ fontSize: 14, color: C.textMuted, marginTop: 4 }}>Análise detalhada das suas finanças</p>
-                </motion.div>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                    {/* Period Selector */}
-                    <div style={{ display: 'flex', borderRadius: 10, overflow: 'hidden', border: `1px solid ${C.border}` }}>
-                        {PERIOD_OPTIONS.map(p => (
-                            <button key={p.value} onClick={() => setMonths(p.value)} style={{
-                                padding: '8px 14px', fontSize: 12, fontWeight: 500, border: 'none', cursor: 'pointer',
-                                backgroundColor: months === p.value ? 'rgba(201,168,88,0.15)' : C.secondary,
-                                color: months === p.value ? C.gold : C.textMuted,
-                                transition: 'all 0.2s',
-                            }}>
-                                {p.label}
-                            </button>
-                        ))}
-                    </div>
+        <div style={{ paddingBottom: NAV_SAFE_AREA }}>
+            {/* Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
+                <div>
+                    <h1 style={{ fontSize: 20, fontWeight: 700, color: TC.text }}>Relatórios Analíticos</h1>
+                    <p style={{ color: TC.textMuted, fontSize: 13 }}>
+                        {data.monthly.length} meses de histórico
+                    </p>
                 </div>
-            </div>
-
-            {/* ========== Summary Cards ========== */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, marginBottom: 24 }}>
-                {[
-                    { label: 'Receitas', value: summary.currentIncome, prev: summary.prevIncome, color: C.emerald, icon: TrendingUp },
-                    { label: 'Despesas', value: summary.currentExpense, prev: summary.prevExpense, color: C.red, icon: TrendingDown, invert: true },
-                    { label: 'Economia', value: summary.currentSaving, prev: summary.prevSaving, color: summary.currentSaving >= 0 ? C.emerald : C.red, icon: Wallet },
-                    { label: 'Patrimônio', value: summary.patrimony, prev: 0, color: C.gold, icon: DollarSign, noVariation: true },
-                ].map((s, i) => {
-                    const Icon = s.icon
-                    return (
-                        <motion.div key={s.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}
-                            style={{ ...cardStyle, padding: 20 }}>
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                                <span style={{ fontSize: 13, color: C.textMuted }}>{s.label}</span>
-                                <Icon size={16} style={{ color: s.color, opacity: 0.7 }} />
-                            </div>
-                            <p style={{ fontSize: 20, fontWeight: 700, color: s.color }}>{fmt(s.value)}</p>
-                            {!s.noVariation && (
-                                <div style={{ marginTop: 4 }}>
-                                    <Variation current={s.value} previous={s.prev} invert={s.invert} />
-                                </div>
-                            )}
-                        </motion.div>
-                    )
-                })}
-            </div>
-
-            {/* ========== Saving Rate + Averages ========== */}
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
-                style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 24 }}>
-
-                {/* Saving Rate Card */}
-                <div style={{ ...cardHlStyle, padding: 20 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                        <Activity size={16} style={{ color: C.gold }} />
-                        <span style={{ fontSize: 13, color: C.textMuted }}>Taxa de Poupança</span>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-                        <span style={{
-                            fontSize: 28, fontWeight: 700,
-                            color: summary.savingRate >= 20 ? C.emerald : summary.savingRate >= 10 ? C.yellow : C.red,
-                        }}>
-                            {summary.savingRate}%
-                        </span>
-                        <span style={{ fontSize: 12, color: C.textMuted }}>
-                            {summary.savingRate >= 20 ? '✅ Excelente' : summary.savingRate >= 10 ? '⚠️ Razoável' : '🔴 Baixa'}
-                        </span>
-                    </div>
-                    <div style={{ height: 6, borderRadius: 999, backgroundColor: C.secondary, marginTop: 12 }}>
-                        <motion.div
-                            initial={{ width: 0 }}
-                            animate={{ width: `${Math.min(100, Math.max(0, summary.savingRate / 30 * 100))}%` }}
-                            transition={{ duration: 1, delay: 0.3 }}
+                <div style={{ display: 'flex', gap: 8, position: 'relative' }}>
+                    <button onClick={fetchData} style={compactBtnOut} disabled={loading}>
+                        <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+                    </button>
+                    <button onClick={() => setShowExportMenu(!showExportMenu)} style={compactBtn}>
+                        <Download size={14} /> Exportar
+                    </button>
+                    {/* Export Dropdown */}
+                    {showExportMenu && (
+                        <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }}
                             style={{
-                                height: '100%', borderRadius: 999,
-                                background: summary.savingRate >= 20 ? C.emerald : summary.savingRate >= 10 ? C.yellow : C.red,
+                                position: 'absolute', top: '100%', right: 0, marginTop: 6, zIndex: 50,
+                                ...compactCard, padding: 8, minWidth: 220,
+                                boxShadow: '0 10px 40px rgba(0,0,0,0.4)',
+                            }}>
+                            {[
+                                { label: 'Fluxo Mensal (CSV)', icon: FileSpreadsheet, fn: handleExportCSV },
+                                { label: 'Categorias (CSV)', icon: FileSpreadsheet, fn: handleExportCategoriesCSV },
+                                { label: 'Relatório Completo (PDF)', icon: FileText, fn: handleExportPDF },
+                            ].map(opt => (
+                                <button key={opt.label} onClick={opt.fn}
+                                    style={{
+                                        display: 'flex', alignItems: 'center', gap: 10, width: '100%',
+                                        padding: '10px 12px', borderRadius: 8, border: 'none', cursor: 'pointer',
+                                        backgroundColor: 'transparent', color: TC.text, fontSize: 12,
+                                        textAlign: 'left', transition: 'background 0.15s',
+                                    }}
+                                    onMouseEnter={e => e.currentTarget.style.backgroundColor = TC.secondary}
+                                    onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}>
+                                    <opt.icon size={14} style={{ color: TC.gold, flexShrink: 0 }} />
+                                    {opt.label}
+                                </button>
+                            ))}
+                        </motion.div>
+                    )}
+                </div>
+            </div>
+
+            {/* Click outside to close export menu */}
+            {showExportMenu && (
+                <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => setShowExportMenu(false)} />
+            )}
+
+            {/* ══════ KPI Cards ══════ */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 10, marginBottom: 16 }}>
+                {/* Receita do Mês */}
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+                    style={{ ...compactCard, padding: '14px 16px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                        <span style={{ fontSize: 11, color: TC.textMuted }}>Receita (mês)</span>
+                        <ArrowUpRight size={14} style={{ color: TC.emerald }} />
+                    </div>
+                    <p style={{ fontSize: 20, fontWeight: 700, color: TC.emerald }}>{fmt(currentMonth?.income ?? 0)}</p>
+                    {incomeChange !== 0 && (
+                        <p style={{ fontSize: 10, color: incomeChange >= 0 ? TC.emerald : TC.red, marginTop: 2 }}>
+                            {incomeChange >= 0 ? '↑' : '↓'} {Math.abs(incomeChange).toFixed(1)}% vs anterior
+                        </p>
+                    )}
+                </motion.div>
+
+                {/* Despesa do Mês */}
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
+                    style={{ ...compactCard, padding: '14px 16px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                        <span style={{ fontSize: 11, color: TC.textMuted }}>Despesa (mês)</span>
+                        <ArrowDownRight size={14} style={{ color: TC.red }} />
+                    </div>
+                    <p style={{ fontSize: 20, fontWeight: 700, color: TC.red }}>{fmt(currentMonth?.expenses ?? 0)}</p>
+                    {expenseChange !== 0 && (
+                        <p style={{ fontSize: 10, color: expenseChange <= 0 ? TC.emerald : TC.red, marginTop: 2 }}>
+                            {expenseChange <= 0 ? '↓' : '↑'} {Math.abs(expenseChange).toFixed(1)}% vs anterior
+                        </p>
+                    )}
+                </motion.div>
+
+                {/* Saldo */}
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+                    style={{ ...compactCard, padding: '14px 16px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                        <span style={{ fontSize: 11, color: TC.textMuted }}>Saldo do Mês</span>
+                        {(currentMonth?.income ?? 0) - (currentMonth?.expenses ?? 0) >= 0
+                            ? <CheckCircle2 size={14} style={{ color: TC.emerald }} />
+                            : <AlertTriangle size={14} style={{ color: TC.red }} />
+                        }
+                    </div>
+                    <p style={{
+                        fontSize: 20, fontWeight: 700,
+                        color: (currentMonth?.income ?? 0) - (currentMonth?.expenses ?? 0) >= 0 ? TC.emerald : TC.red,
+                    }}>
+                        {fmt((currentMonth?.income ?? 0) - (currentMonth?.expenses ?? 0))}
+                    </p>
+                </motion.div>
+
+                {/* Taxa de Poupança */}
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
+                    style={{ ...compactCard, padding: '14px 16px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                        <span style={{ fontSize: 11, color: TC.textMuted }}>Poupança</span>
+                        <Sparkles size={14} style={{ color: TC.gold }} />
+                    </div>
+                    <p style={{
+                        fontSize: 20, fontWeight: 700,
+                        color: savingsRate >= 20 ? TC.emerald : savingsRate > 0 ? TC.gold : TC.red,
+                    }}>
+                        {savingsRate.toFixed(1)}%
+                    </p>
+                    <p style={{ fontSize: 10, color: TC.textMuted, marginTop: 2 }}>
+                        {savingsRate >= 30 ? 'Excelente!' : savingsRate >= 20 ? 'Bom' : savingsRate > 0 ? 'Pode melhorar' : 'Negativo'}
+                    </p>
+                </motion.div>
+            </div>
+
+            {/* ══════ Médias Anuais ══════ */}
+            <div style={{ ...compactCard, padding: '14px 16px', marginBottom: 16 }}>
+                <p style={{ fontSize: 11, color: TC.textMuted, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 }}>
+                    Médias dos Últimos 12 Meses
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+                    <div style={{ textAlign: 'center' }}>
+                        <p style={{ fontSize: 10, color: TC.textMuted }}>Receita Média</p>
+                        <p style={{ fontSize: 16, fontWeight: 700, color: TC.emerald }}>{fmt(avgIncome)}</p>
+                    </div>
+                    <div style={{ textAlign: 'center' }}>
+                        <p style={{ fontSize: 10, color: TC.textMuted }}>Despesa Média</p>
+                        <p style={{ fontSize: 16, fontWeight: 700, color: TC.red }}>{fmt(avgExpense)}</p>
+                    </div>
+                    <div style={{ textAlign: 'center' }}>
+                        <p style={{ fontSize: 10, color: TC.textMuted }}>Economia Média</p>
+                        <p style={{ fontSize: 16, fontWeight: 700, color: avgSavings >= 0 ? TC.gold : TC.red }}>{fmt(avgSavings)}</p>
+                    </div>
+                </div>
+            </div>
+
+            {/* ══════ Fluxo de Caixa (Barras) ══════ */}
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+                style={{ ...compactCard, padding: '16px', marginBottom: 16 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <BarChart3 size={16} style={{ color: TC.gold }} />
+                        <p style={{ fontSize: 14, fontWeight: 600, color: TC.text }}>Fluxo de Caixa</p>
+                    </div>
+                    <div style={{ display: 'flex', gap: 12 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                            <div style={{ width: 8, height: 8, borderRadius: 2, background: TC.emerald }} />
+                            <span style={{ fontSize: 10, color: TC.textMuted }}>Receitas</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                            <div style={{ width: 8, height: 8, borderRadius: 2, background: TC.red }} />
+                            <span style={{ fontSize: 10, color: TC.textMuted }}>Despesas</span>
+                        </div>
+                    </div>
+                </div>
+                <div style={{ height: 200, display: 'flex', alignItems: 'flex-end', gap: 6, paddingBottom: 24, position: 'relative' }}>
+                    {data.monthly.map((m, i) => {
+                        const incH = (m.income / maxMonthlyValue) * 100
+                        const expH = (m.expenses / maxMonthlyValue) * 100
+                        const isHovered = hoveredBar === i
+                        const balance = m.income - m.expenses
+                        return (
+                            <div key={m.month} style={{
+                                flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
+                                height: '100%', position: 'relative', cursor: 'pointer',
                             }}
-                        />
-                    </div>
-                    <p style={{ fontSize: 11, color: C.textMuted2, marginTop: 8 }}>Ideal: 20-30% da renda</p>
-                </div>
-
-                {/* Averages Card */}
-                <div style={{ ...cardStyle, padding: 20 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                        <BarChart3 size={16} style={{ color: C.gold }} />
-                        <span style={{ fontSize: 13, color: C.textMuted }}>Médias do Período ({months}m)</span>
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span style={{ fontSize: 13, color: C.textMuted }}>Receita média</span>
-                            <span style={{ fontSize: 14, fontWeight: 600, color: C.emerald }}>{fmt(summary.avgIncome)}</span>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span style={{ fontSize: 13, color: C.textMuted }}>Despesa média</span>
-                            <span style={{ fontSize: 14, fontWeight: 600, color: C.red }}>{fmt(summary.avgExpense)}</span>
-                        </div>
-                        <div style={{ height: 1, backgroundColor: C.border }} />
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span style={{ fontSize: 13, color: C.textMuted }}>Economia média</span>
-                            <span style={{ fontSize: 14, fontWeight: 600, color: summary.avgIncome - summary.avgExpense >= 0 ? C.emerald : C.red }}>
-                                {fmt(summary.avgIncome - summary.avgExpense)}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Renda declarada vs Real */}
-                {summary.monthlyIncome && (
-                    <div style={{ ...cardStyle, padding: 20 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                            <DollarSign size={16} style={{ color: C.gold }} />
-                            <span style={{ fontSize: 13, color: C.textMuted }}>Renda Declarada vs Real</span>
-                        </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                <span style={{ fontSize: 13, color: C.textMuted }}>Declarada</span>
-                                <span style={{ fontSize: 14, fontWeight: 600, color: C.text }}>{fmt(summary.monthlyIncome)}</span>
-                            </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                <span style={{ fontSize: 13, color: C.textMuted }}>Recebida (mês)</span>
-                                <span style={{ fontSize: 14, fontWeight: 600, color: C.emerald }}>{fmt(summary.currentIncome)}</span>
-                            </div>
-                            <div style={{ height: 1, backgroundColor: C.border }} />
-                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                <span style={{ fontSize: 13, color: C.textMuted }}>Diferença</span>
+                                onMouseEnter={() => setHoveredBar(i)}
+                                onMouseLeave={() => setHoveredBar(null)}>
+                                {/* Tooltip */}
+                                {isHovered && (
+                                    <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }}
+                                        style={{
+                                            position: 'absolute', bottom: '100%', marginBottom: 8, zIndex: 20,
+                                            padding: '8px 12px', borderRadius: 8,
+                                            backgroundColor: theme === 'light' ? '#fff' : '#1a1d24',
+                                            border: `1px solid ${TC.border}`,
+                                            boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
+                                            whiteSpace: 'nowrap', fontSize: 11,
+                                        }}>
+                                        <p style={{ fontWeight: 600, color: TC.text, marginBottom: 4 }}>{fullMonthLabel(m.month)}</p>
+                                        <p style={{ color: TC.emerald }}>Receitas: {fmt(m.income)}</p>
+                                        <p style={{ color: TC.red }}>Despesas: {fmt(m.expenses)}</p>
+                                        <p style={{ color: balance >= 0 ? TC.gold : TC.red, fontWeight: 600, marginTop: 2, borderTop: `1px solid ${TC.border}`, paddingTop: 4 }}>
+                                            Saldo: {fmt(balance)}
+                                        </p>
+                                    </motion.div>
+                                )}
+                                <div style={{ flex: 1, width: '100%', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: 2 }}>
+                                    <motion.div
+                                        initial={{ height: 0 }}
+                                        animate={{ height: `${incH}%` }}
+                                        transition={{ duration: 0.5, delay: i * 0.03 }}
+                                        style={{
+                                            width: '38%', background: TC.emerald, borderRadius: '3px 3px 0 0',
+                                            opacity: isHovered ? 1 : 0.7, transition: 'opacity 0.15s',
+                                            minHeight: m.income > 0 ? 4 : 0,
+                                        }}
+                                    />
+                                    <motion.div
+                                        initial={{ height: 0 }}
+                                        animate={{ height: `${expH}%` }}
+                                        transition={{ duration: 0.5, delay: i * 0.03 + 0.05 }}
+                                        style={{
+                                            width: '38%', background: TC.red, borderRadius: '3px 3px 0 0',
+                                            opacity: isHovered ? 1 : 0.7, transition: 'opacity 0.15s',
+                                            minHeight: m.expenses > 0 ? 4 : 0,
+                                        }}
+                                    />
+                                </div>
                                 <span style={{
-                                    fontSize: 14, fontWeight: 600,
-                                    color: summary.currentIncome >= summary.monthlyIncome ? C.emerald : C.yellow,
+                                    fontSize: 9, color: isHovered ? TC.gold : TC.textMuted,
+                                    fontWeight: isHovered ? 600 : 400, transition: 'all 0.15s',
                                 }}>
-                                    {summary.currentIncome >= summary.monthlyIncome ? '+' : ''}{fmt(summary.currentIncome - summary.monthlyIncome)}
+                                    {monthLabel(m.month)}
                                 </span>
                             </div>
-                        </div>
-                    </div>
-                )}
-            </motion.div>
-
-            {/* ========== Monthly Chart — Receitas vs Despesas ========== */}
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-                style={{ ...cardStyle, padding: 24, marginBottom: 24 }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-                    <h3 style={{ fontWeight: 600, color: C.text }}>Receitas vs Despesas</h3>
-                    <div style={{ display: 'flex', gap: 16 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <div style={{ width: 10, height: 10, borderRadius: 999, background: C.goldGrad }} />
-                            <span style={{ fontSize: 11, color: C.textMuted }}>Receitas</span>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <div style={{ width: 10, height: 10, borderRadius: 999, backgroundColor: 'rgba(239,68,68,0.6)' }} />
-                            <span style={{ fontSize: 11, color: C.textMuted }}>Despesas</span>
-                        </div>
-                    </div>
-                </div>
-
-                {monthly.length === 0 ? (
-                    <p style={{ textAlign: 'center', color: C.textMuted, padding: 20 }}>Sem dados no período</p>
-                ) : (
-                    monthly.map((d, i) => {
-                        const isLast = i === monthly.length - 1
-                        const saving = d.income - d.expense
-                        return (
-                            <div key={d.label} style={{ marginBottom: 16 }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 6, alignItems: 'center' }}>
-                                    <span style={{ fontWeight: isLast ? 600 : 400, color: isLast ? C.gold : C.textMuted, minWidth: 60 }}>{d.label}</span>
-                                    <div style={{ display: 'flex', gap: 16 }}>
-                                        <span style={{ color: C.emerald, minWidth: 90, textAlign: 'right' }}>{fmt(d.income)}</span>
-                                        <span style={{ color: C.red, minWidth: 90, textAlign: 'right' }}>{fmt(d.expense)}</span>
-                                        <span style={{
-                                            color: saving >= 0 ? C.emerald : C.red, minWidth: 90, textAlign: 'right', fontWeight: 500,
-                                        }}>
-                                            {saving >= 0 ? '+' : ''}{fmt(saving)}
-                                        </span>
-                                    </div>
-                                </div>
-                                <div style={{ display: 'flex', gap: 4, height: 14 }}>
-                                    <motion.div
-                                        initial={{ width: 0 }}
-                                        animate={{ width: `${(d.income / maxBarMonthly) * 100}%` }}
-                                        transition={{ duration: 0.8, delay: 0.4 + i * 0.05 }}
-                                        style={{
-                                            height: '100%', borderRadius: '7px 0 0 7px',
-                                            background: isLast ? C.goldGrad : 'rgba(52,211,153,0.4)',
-                                        }}
-                                    />
-                                    <motion.div
-                                        initial={{ width: 0 }}
-                                        animate={{ width: `${(d.expense / maxBarMonthly) * 100}%` }}
-                                        transition={{ duration: 0.8, delay: 0.45 + i * 0.05 }}
-                                        style={{
-                                            height: '100%', borderRadius: '0 7px 7px 0',
-                                            backgroundColor: 'rgba(239,68,68,0.4)',
-                                        }}
-                                    />
-                                </div>
-                            </div>
                         )
-                    })
-                )}
+                    })}
+                </div>
             </motion.div>
 
-            {/* ========== Daily Chart + Categories Side by Side ========== */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 24, marginBottom: 24 }}>
-
-                {/* Daily Chart — últimos 30 dias */}
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}
-                    style={{ ...cardStyle, padding: 24 }}>
-                    <h3 style={{ fontWeight: 600, color: C.text, marginBottom: 4 }}>Últimos 30 Dias</h3>
-                    <p style={{ fontSize: 12, color: C.textMuted, marginBottom: 16 }}>Fluxo diário de receitas e despesas</p>
-
-                    <div style={{ display: 'flex', alignItems: 'flex-end', gap: 2, height: 120 }}>
-                        {dailyChart.map((d, i) => {
-                            const h = maxDaily > 0 ? (d.expense / maxDaily) * 100 : 0
-                            const hInc = maxDaily > 0 ? (d.income / maxDaily) * 100 : 0
-                            return (
-                                <div key={d.date} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
-                                    {hInc > 0 && (
-                                        <motion.div
-                                            initial={{ height: 0 }} animate={{ height: `${hInc}%` }}
-                                            transition={{ duration: 0.5, delay: 0.5 + i * 0.01 }}
-                                            style={{ width: '100%', borderRadius: '2px 2px 0 0', backgroundColor: 'rgba(52,211,153,0.5)', minHeight: hInc > 0 ? 2 : 0 }}
-                                            title={`${d.label} — Receita: ${fmt(d.income)}`}
-                                        />
-                                    )}
-                                    {h > 0 && (
-                                        <motion.div
-                                            initial={{ height: 0 }} animate={{ height: `${h}%` }}
-                                            transition={{ duration: 0.5, delay: 0.5 + i * 0.01 }}
-                                            style={{ width: '100%', borderRadius: '2px 2px 0 0', backgroundColor: 'rgba(239,68,68,0.5)', minHeight: h > 0 ? 2 : 0 }}
-                                            title={`${d.label} — Despesa: ${fmt(d.expense)}`}
-                                        />
-                                    )}
-                                </div>
-                            )
-                        })}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16 }}>
+                {/* ══════ Gastos por Categoria ══════ */}
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
+                    style={{ ...compactCard, padding: '16px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <PieChart size={16} style={{ color: TC.gold }} />
+                            <p style={{ fontSize: 14, fontWeight: 600, color: TC.text }}>Gastos por Categoria</p>
+                        </div>
+                        <span style={{ fontSize: 11, color: TC.textMuted }}>{fmt(totalCategories)}</span>
                     </div>
 
-                    {/* Labels — a cada 5 dias */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
-                        {dailyChart.filter((_, i) => i % 7 === 0 || i === dailyChart.length - 1).map(d => (
-                            <span key={d.date} style={{ fontSize: 9, color: C.textMuted2 }}>{d.label}</span>
-                        ))}
-                    </div>
-                </motion.div>
-
-                {/* Categories Breakdown */}
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
-                    style={{ ...cardStyle, padding: 24 }}>
-                    <h3 style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 600, color: C.text, marginBottom: 4 }}>
-                        <PieChart size={18} style={{ color: C.gold }} /> Despesas por Categoria
-                    </h3>
-                    <p style={{ fontSize: 12, color: C.textMuted, marginBottom: 16 }}>Mês atual</p>
-
-                    {categoryBreakdown.length === 0 ? (
-                        <p style={{ textAlign: 'center', color: C.textMuted, padding: 20 }}>Sem despesas no mês</p>
+                    {data.categories.length === 0 ? (
+                        <p style={{ textAlign: 'center', padding: 20, color: TC.textMuted, fontSize: 13 }}>
+                            Sem despesas categorizadas
+                        </p>
                     ) : (
                         <>
-                            {/* Stacked bar */}
-                            <div style={{ display: 'flex', height: 20, borderRadius: 999, overflow: 'hidden', marginBottom: 16 }}>
-                                {categoryBreakdown.map(c => (
-                                    <motion.div
-                                        key={c.id}
-                                        initial={{ width: 0 }}
-                                        animate={{ width: `${c.pct}%` }}
-                                        transition={{ duration: 0.8, delay: 0.5 }}
-                                        style={{ height: '100%', backgroundColor: c.color }}
-                                        title={`${c.name}: ${c.pct}%`}
-                                    />
-                                ))}
+                            {/* Visual bar */}
+                            <div style={{ display: 'flex', height: 12, borderRadius: 6, overflow: 'hidden', marginBottom: 16 }}>
+                                {data.categories.slice(0, 8).map((cat, i) => {
+                                    const pct = totalCategories > 0 ? (cat.total / totalCategories) * 100 : 0
+                                    const colors = [TC.gold, TC.emerald, TC.red, TC.blue, TC.violet, TC.orange, TC.cyan, TC.pink]
+                                    return (
+                                        <motion.div key={cat.name}
+                                            initial={{ width: 0 }}
+                                            animate={{ width: `${pct}%` }}
+                                            transition={{ duration: 0.6, delay: 0.3 + i * 0.05 }}
+                                            style={{ height: '100%', backgroundColor: colors[i % colors.length] }}
+                                            title={`${cat.name}: ${pct.toFixed(1)}%`}
+                                        />
+                                    )
+                                })}
                             </div>
 
                             {/* List */}
-                            {categoryBreakdown.map((c, i) => (
-                                <div key={c.id} style={{
-                                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                                    padding: '8px 0', borderBottom: i < categoryBreakdown.length - 1 ? `1px solid ${C.border}` : 'none',
-                                }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                        <div style={{ width: 10, height: 10, borderRadius: 999, backgroundColor: c.color, flexShrink: 0 }} />
-                                        <span style={{ fontSize: 13, color: C.text }}>{c.icon} {c.name}</span>
-                                    </div>
-                                    <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                                        <span style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{fmt(c.amount)}</span>
-                                        <span style={{ fontSize: 12, color: C.textMuted, minWidth: 40, textAlign: 'right' }}>{c.pct}%</span>
-                                    </div>
-                                </div>
-                            ))}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                                {data.categories.map((cat, i) => {
+                                    const pct = totalCategories > 0 ? (cat.total / totalCategories) * 100 : 0
+                                    const colors = [TC.gold, TC.emerald, TC.red, TC.blue, TC.violet, TC.orange, TC.cyan, TC.pink]
+                                    const color = colors[i % colors.length]
+                                    return (
+                                        <div key={cat.name}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3 }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                                    <span style={{ fontSize: 14 }}>{cat.icon}</span>
+                                                    <span style={{ fontSize: 12, color: TC.text }}>{cat.name}</span>
+                                                </div>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                                    <span style={{ fontSize: 12, fontWeight: 600, color: TC.text }}>{fmt(cat.total)}</span>
+                                                    <span style={{
+                                                        fontSize: 10, fontWeight: 500, padding: '1px 6px', borderRadius: 4,
+                                                        backgroundColor: `${color}15`, color,
+                                                    }}>
+                                                        {pct.toFixed(1)}%
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div style={{ height: 4, borderRadius: 2, background: TC.secondary, overflow: 'hidden' }}>
+                                                <motion.div
+                                                    initial={{ width: 0 }}
+                                                    animate={{ width: `${pct}%` }}
+                                                    transition={{ duration: 0.5, delay: 0.3 + i * 0.04 }}
+                                                    style={{ height: '100%', borderRadius: 2, background: color }}
+                                                />
+                                            </div>
+                                        </div>
+                                    )
+                                })}
+                            </div>
                         </>
                     )}
                 </motion.div>
-            </div>
 
-            {/* ========== Top Expenses ========== */}
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}
-                style={{ ...cardStyle, padding: 24, marginBottom: 32 }}>
-                <h3 style={{ fontWeight: 600, color: C.text, marginBottom: 4 }}>Maiores Despesas do Mês</h3>
-                <p style={{ fontSize: 12, color: C.textMuted, marginBottom: 16 }}>Top 10 transações</p>
+                {/* ══════ Tendência de Poupança ══════ */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                    {/* Savings Rate Trend */}
+                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
+                        style={{ ...compactCard, padding: '16px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+                            <TrendingUp size={16} style={{ color: TC.gold }} />
+                            <p style={{ fontSize: 14, fontWeight: 600, color: TC.text }}>Tendência de Economia</p>
+                        </div>
+                        {savingsTrend.length === 0 ? (
+                            <p style={{ textAlign: 'center', padding: 20, color: TC.textMuted, fontSize: 13 }}>Dados insuficientes</p>
+                        ) : (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                                {savingsTrend.map((s, i) => {
+                                    const isPositive = s.rate >= 0
+                                    const barWidth = Math.min(Math.abs(s.rate), 100)
+                                    return (
+                                        <div key={s.month}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
+                                                <span style={{ fontSize: 11, color: TC.textMuted }}>{s.month}</span>
+                                                <div style={{ display: 'flex', gap: 8 }}>
+                                                    <span style={{ fontSize: 11, color: TC.textMuted }}>{fmt(s.balance)}</span>
+                                                    <span style={{
+                                                        fontSize: 11, fontWeight: 600,
+                                                        color: isPositive ? TC.emerald : TC.red,
+                                                    }}>
+                                                        {s.rate.toFixed(1)}%
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div style={{ height: 6, borderRadius: 3, background: TC.secondary, overflow: 'hidden' }}>
+                                                <motion.div
+                                                    initial={{ width: 0 }}
+                                                    animate={{ width: `${barWidth}%` }}
+                                                    transition={{ duration: 0.5, delay: 0.4 + i * 0.05 }}
+                                                    style={{
+                                                        height: '100%', borderRadius: 3,
+                                                        background: isPositive
+                                                            ? (s.rate >= 20 ? TC.emerald : TC.gold)
+                                                            : TC.red,
+                                                    }}
+                                                />
+                                            </div>
+                                        </div>
+                                    )
+                                })}
+                            </div>
+                        )}
+                        {/* Referência */}
+                        <div style={{
+                            marginTop: 12, padding: 10, borderRadius: 8, backgroundColor: TC.secondary,
+                            fontSize: 10, color: TC.textMuted, lineHeight: 1.5,
+                        }}>
+                            📊 <strong>Referência:</strong> Taxa de poupança ideal é entre 20% e 30%.
+                            Abaixo de 10% indica risco. Acima de 30% é excelente.
+                        </div>
+                    </motion.div>
 
-                {topExpenses.length === 0 ? (
-                    <p style={{ textAlign: 'center', color: C.textMuted, padding: 20 }}>Sem despesas no mês</p>
-                ) : (
-                    <div style={{ overflowX: 'auto' }}>
-                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                            <thead>
-                                <tr>
-                                    {['#', 'Descrição', 'Categoria', 'Data', 'Valor'].map(h => (
-                                        <th key={h} style={{
-                                            textAlign: h === 'Valor' ? 'right' : 'left', padding: '8px 12px', fontSize: 11,
-                                            fontWeight: 600, color: C.textMuted, borderBottom: `1px solid ${C.border}`,
-                                            textTransform: 'uppercase', letterSpacing: '0.5px',
-                                        }}>{h}</th>
-                                    ))}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {topExpenses.map((tx, i) => (
-                                    <motion.tr key={i}
-                                        initial={{ opacity: 0, x: -10 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        transition={{ delay: 0.5 + i * 0.03 }}
-                                        style={{ borderBottom: i < topExpenses.length - 1 ? `1px solid ${C.border}` : 'none' }}>
-                                        <td style={{ padding: '10px 12px', fontSize: 12, color: C.textMuted }}>{i + 1}</td>
-                                        <td style={{ padding: '10px 12px', fontSize: 13, fontWeight: 500, color: C.text }}>{tx.description}</td>
-                                        <td style={{ padding: '10px 12px' }}>
+                    {/* Comparativo Mensal */}
+                    {currentMonth && prevMonth && (
+                        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}
+                            style={{ ...compactCard, padding: '16px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                                <Calendar size={16} style={{ color: TC.gold }} />
+                                <p style={{ fontSize: 14, fontWeight: 600, color: TC.text }}>Mês Atual vs Anterior</p>
+                            </div>
+                            {[
+                                {
+                                    label: 'Receitas',
+                                    current: currentMonth.income,
+                                    prev: prevMonth.income,
+                                    color: TC.emerald,
+                                },
+                                {
+                                    label: 'Despesas',
+                                    current: currentMonth.expenses,
+                                    prev: prevMonth.expenses,
+                                    color: TC.red,
+                                    invertGood: true,
+                                },
+                                {
+                                    label: 'Economia',
+                                    current: currentMonth.income - currentMonth.expenses,
+                                    prev: prevMonth.income - prevMonth.expenses,
+                                    color: TC.gold,
+                                },
+                            ].map(row => {
+                                const diff = row.current - row.prev
+                                const pct = row.prev !== 0 ? (diff / Math.abs(row.prev)) * 100 : 0
+                                const isGood = row.invertGood ? diff <= 0 : diff >= 0
+                                return (
+                                    <div key={row.label} style={{
+                                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                        padding: '10px 12px', borderRadius: 8, backgroundColor: TC.secondary, marginBottom: 6,
+                                    }}>
+                                        <div>
+                                            <p style={{ fontSize: 12, fontWeight: 500, color: TC.text }}>{row.label}</p>
+                                            <p style={{ fontSize: 10, color: TC.textMuted }}>
+                                                {fmt(row.prev)} → {fmt(row.current)}
+                                            </p>
+                                        </div>
+                                        <div style={{
+                                            display: 'flex', alignItems: 'center', gap: 4, padding: '3px 8px',
+                                            borderRadius: 6,
+                                            backgroundColor: isGood ? 'rgba(16,185,129,0.1)' : 'rgba(248,113,113,0.1)',
+                                        }}>
+                                            {isGood
+                                                ? <ArrowUpRight size={12} style={{ color: TC.emerald }} />
+                                                : <ArrowDownRight size={12} style={{ color: TC.red }} />
+                                            }
                                             <span style={{
-                                                display: 'inline-flex', alignItems: 'center', gap: 4,
-                                                padding: '3px 8px', borderRadius: 6, fontSize: 11,
-                                                backgroundColor: `${tx.category_color}15`, color: tx.category_color,
+                                                fontSize: 11, fontWeight: 600,
+                                                color: isGood ? TC.emerald : TC.red,
                                             }}>
-                                                {tx.category_icon} {tx.category_name}
+                                                {pct >= 0 ? '+' : ''}{pct.toFixed(1)}%
                                             </span>
-                                        </td>
-                                        <td style={{ padding: '10px 12px', fontSize: 12, color: C.textMuted }}>
-                                            {new Date(tx.date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
-                                        </td>
-                                        <td style={{ padding: '10px 12px', fontSize: 13, fontWeight: 600, color: C.red, textAlign: 'right' }}>
-                                            {fmt(tx.amount)}
-                                        </td>
-                                    </motion.tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
-            </motion.div>
+                                        </div>
+                                    </div>
+                                )
+                            })}
+                        </motion.div>
+                    )}
+                </div>
+            </div>
+            <style jsx>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
         </div>
+    )
+}
+
+export default function ReportsPage() {
+    return (
+        <ErrorBoundary fallbackTitle="Erro nos Relatórios">
+            <ReportsContent />
+        </ErrorBoundary>
     )
 }

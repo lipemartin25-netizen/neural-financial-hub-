@@ -9,7 +9,7 @@ const Footer = () => {
                         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-gold">
                             <Sparkles size={16} className="text-background" />
                         </div>
-                        <span className="text-lg font-bold tracking-tight text-white">Aurum<span className="text-gold">Finance</span></span>
+                        <span className="text-lg font-bold tracking-tight text-white">Neural <span className="text-gold">Finance Hub</span></span>
                     </div>
 
                     <div className="flex gap-8 text-sm text-muted-foreground">
@@ -18,9 +18,7 @@ const Footer = () => {
                         ))}
                     </div>
 
-                    <p className="text-xs text-muted-foreground">
-                        © {new Date().getFullYear()} AurumFinance. Todos os direitos reservados.
-                    </p>
+                    © {new Date().getFullYear()} Neural Finance Hub. Todos os direitos reservados.
                 </div>
             </div>
         </footer>

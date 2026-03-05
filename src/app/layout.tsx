@@ -19,15 +19,19 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
     title: {
-        default: 'AurumFinance | Gestão de Elite',
-        template: '%s | AurumFinance',
+        default: 'Neural Finance Hub | Gestão de Elite',
+        template: '%s | Neural Finance Hub',
     },
     description: 'Plataforma premium de gestão financeira pessoal com IA',
     manifest: '/manifest.json',
+    icons: {
+        icon: '/logo-neura.png',
+        apple: '/logo-neura.png',
+    },
     appleWebApp: {
         capable: true,
         statusBarStyle: 'black-translucent',
-        title: 'AurumFin',
+        title: 'Neural Finance Hub',
     },
     formatDetection: {
         telephone: false,
@@ -48,9 +52,10 @@ export default function RootLayout({
     return (
         <html lang="pt-BR" className="dark" style={{ backgroundColor: '#0b0d10', colorScheme: 'dark' }}>
             <head>
-                <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-192x192.png" />
-                <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-96x96.png" />
-                <link rel="icon" type="image/png" sizes="16x16" href="/icons/icon-72x72.png" />
+                <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
+                <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png" />
+                <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png" />
+                <meta property="og:image" content="/og-image.png" />
             </head>
             <body
                 className={`${inter.variable} font-sans`}

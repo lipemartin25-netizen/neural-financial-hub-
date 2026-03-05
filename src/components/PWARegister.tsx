@@ -96,7 +96,7 @@ export default function PWARegister() {
                             <Smartphone size={22} style={{ color: C.bg }} />
                         </div>
                         <div>
-                            <p style={{ fontSize: 15, fontWeight: 700, color: C.text }}>Instalar AurumFin</p>
+                            <p style={{ fontSize: 15, fontWeight: 700, color: C.text }}>Instalar Neural Finance Hub</p>
                             <p style={{ fontSize: 12, color: C.textMuted }}>Acesse direto da sua tela inicial</p>
                         </div>
                     </div>

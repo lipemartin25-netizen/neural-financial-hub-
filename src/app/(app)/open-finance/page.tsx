@@ -5,6 +5,14 @@ import { Building2, RefreshCw, Trash2, Plus, Loader2, Link2, ExternalLink, Shiel
 import { C, cardStyle, cardHlStyle, btnGoldStyle, btnOutlineStyle } from '@/lib/theme'
 import { useApp } from '@/contexts/AppContext'
 import { toast } from 'sonner'
+import dynamic from 'next/dynamic'
+
+// Import dinâmico do widget para evitar erro de 'window is not defined' no SSR
+const PluggyConnect = dynamic(
+    () => import('react-pluggy-connect').then((mod) => mod.PluggyConnect),
+    { ssr: false }
+)
+
 type Connection = {
     id: string
     item_id: string
@@ -13,12 +21,17 @@ type Connection = {
     status: string
     last_sync_at: string | null
 }
+
 export default function OpenFinancePage() {
     const [connections, setConnections] = useState<Connection[]>([])
     const [loading, setLoading] = useState(true)
     const [syncing, setSyncing] = useState<string | null>(null)
     const [connecting, setConnecting] = useState(false)
+    const [connectToken, setConnectToken] = useState<string | null>(null)
+    const [isWidgetOpen, setIsWidgetOpen] = useState(false)
+
     const { t } = useApp()
+
     const fetchConnections = useCallback(async () => {
         setLoading(true)
         try {
@@ -27,26 +40,59 @@ export default function OpenFinancePage() {
             setConnections(json.data ?? [])
         } catch { } finally { setLoading(false) }
     }, [])
+
     useEffect(() => { fetchConnections() }, [fetchConnections])
+
     const handleConnect = async () => {
         setConnecting(true)
         try {
             const res = await fetch('/api/open-finance?action=connect_token')
             const json = await res.json()
+
             if (json.demo) {
-                toast.info('Open Finance está em modo demo. Configure PLUGGY_CLIENT_ID e PLUGGY_CLIENT_SECRET no .env')
+                toast.info('Open Finance está em modo demo. Configure as chaves no .env')
                 setConnecting(false)
                 return
             }
+
             if (json.connectToken) {
-                // Em produção, abrir widget Pluggy
-                toast.info('Widget Pluggy seria aberto aqui com o connect token.')
-                // Normalmente: PluggyConnect.init({ connectToken: json.connectToken, ... })
+                setConnectToken(json.connectToken)
+                setIsWidgetOpen(true)
             }
         } catch {
-            toast.error('Erro ao conectar')
+            toast.error('Erro ao gerar token de conexão')
         } finally { setConnecting(false) }
     }
+
+    const handleWidgetSuccess = async (data: { item: { id: string, connector: { name: string, imageUrl: string } } }) => {
+        setIsWidgetOpen(false)
+        setConnecting(true)
+
+        try {
+            // Salvar conexão no banco
+            await fetch('/api/open-finance', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'save_connection',
+                    itemId: data.item.id,
+                    connectorName: data.item.connector.name,
+                    connectorLogo: data.item.connector.imageUrl
+                }),
+            })
+
+            toast.success('Banco conectado! Iniciando sincronização...')
+
+            // Disparar sincronização inicial
+            await handleSync(data.item.id)
+            fetchConnections()
+        } catch {
+            toast.error('Erro ao salvar conexão')
+        } finally {
+            setConnecting(false)
+        }
+    }
+
     const handleSync = async (itemId: string) => {
         setSyncing(itemId)
         try {
@@ -57,7 +103,9 @@ export default function OpenFinancePage() {
             })
             const json = await res.json()
             if (json.success) {
-                toast.success(`Sincronizado! ${json.imported} transações importadas.`)
+                toast.success(`Sincronizado! ${json.imported} transações importadas.`, {
+                    description: 'Histórico de 90 dias e categorização automática aplicados.'
+                })
                 fetchConnections()
             } else {
                 toast.error(json.error || 'Erro na sincronização')
@@ -65,16 +113,32 @@ export default function OpenFinancePage() {
         } catch { toast.error('Erro') }
         finally { setSyncing(null) }
     }
+
     const handleDelete = async (itemId: string) => {
-        if (!confirm('Remover esta conexão bancária?')) return
+        if (!confirm('Remover esta conexão bancária? Contas vinculadas serão mantidas, mas não serão mais atualizadas.')) return
         try {
             await fetch(`/api/open-finance?itemId=${itemId}`, { method: 'DELETE' })
             toast.success('Conexão removida')
             fetchConnections()
         } catch { toast.error('Erro ao remover') }
     }
+
     return (
         <div>
+            {isWidgetOpen && connectToken && (
+                <PluggyConnect
+                    connectToken={connectToken}
+                    includeSandbox={true}
+                    onSuccess={handleWidgetSuccess}
+                    onError={(err) => {
+                        console.error(err)
+                        toast.error('Erro no widget de conexão')
+                        setIsWidgetOpen(false)
+                    }}
+                    onClose={() => setIsWidgetOpen(false)}
+                />
+            )}
+
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
                 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 16 }}>
                 <div>
@@ -88,7 +152,7 @@ export default function OpenFinancePage() {
                 </div>
                 <button onClick={handleConnect} disabled={connecting} style={{ ...btnGoldStyle, opacity: connecting ? 0.7 : 1 }}>
                     {connecting ? <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <Plus size={14} />}
-                    Conectar Banco
+                    {connections.length > 0 ? 'Conectar Novo Banco' : 'Conectar Banco'}
                 </button>
             </motion.div>
             {/* Info Card */}

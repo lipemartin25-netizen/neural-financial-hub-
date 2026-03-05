@@ -1,7 +1,10 @@
+
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
 import type { Boleto } from '@/types/database'
+import { useTransactions } from './useTransactions'
 
 export type BoletoFilters = {
     status?: 'pending' | 'paid' | 'overdue' | 'cancelled' | 'scheduled'
@@ -12,104 +15,112 @@ export function useBoletos(initialFilters: BoletoFilters = {}) {
     const [boletos, setBoletos] = useState<Boleto[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
+    const supabase = createClient()
+    const { createTransaction } = useTransactions()
 
     const fetchBoletos = useCallback(async (filters: BoletoFilters = {}) => {
         setLoading(true)
         setError(null)
 
-        const params = new URLSearchParams()
-        if (filters.status) params.set('status', filters.status)
-        if (filters.search) params.set('search', filters.search)
+        let query = supabase.from('boletos').select('*').order('due_date', { ascending: true })
+
+        if (filters.status && filters.status !== 'all') query = query.eq('status', filters.status)
+        if (filters.search) query = query.ilike('beneficiary_name', `%${filters.search}%`)
 
         try {
-            const res = await fetch(`/api/boletos?${params.toString()}`)
-            if (!res.ok) {
-                const body = await res.json().catch(() => ({}))
-                throw new Error(body.error || `HTTP ${res.status}`)
-            }
-            const json = await res.json()
-            setBoletos(json.data ?? [])
-        } catch (err: unknown) {
-            const message = err instanceof Error ? err.message : 'Erro ao carregar boletos'
-            setError(message)
-            setBoletos([])
+            const { data, error: err } = await query
+            if (err) throw err
+            setBoletos(data || [])
+        } catch (err: any) {
+            setError(err.message)
         } finally {
             setLoading(false)
         }
-    }, [])
+    }, [supabase])
 
     useEffect(() => {
         fetchBoletos(initialFilters)
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [])
+    }, [fetchBoletos, initialFilters])
 
-    const createBoleto = useCallback(async (payload: {
-        beneficiary_name: string
-        amount: number | string
-        due_date: string
-        type?: string
-        notes?: string | null
-        barcode?: string | null
-        is_recurring?: boolean
-    }) => {
+    const createBoleto = useCallback(async (payload: any) => {
         try {
-            const res = await fetch('/api/boletos', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload),
+            const { error: err } = await supabase.from('boletos').insert([payload])
+            if (err) throw err
+            await fetchBoletos(initialFilters)
+            return { error: null }
+        } catch (err: any) {
+            return { error: err.message }
+        }
+    }, [supabase, fetchBoletos, initialFilters])
+
+    const updateBoleto = useCallback(async (id: string, payload: any) => {
+        try {
+            const { error: err } = await supabase.from('boletos').update(payload).eq('id', id)
+            if (err) throw err
+            await fetchBoletos(initialFilters)
+            return { error: null }
+        } catch (err: any) {
+            return { error: err.message }
+        }
+    }, [supabase, fetchBoletos, initialFilters])
+
+    const markAsPaid = useCallback(async (id: string, accountId?: string) => {
+        if (!accountId) {
+            return { error: 'Por favor, selecione uma conta para realizar o pagamento.' }
+        }
+
+        try {
+            // 1. Buscar dados do boleto
+            const { data: boleto, error: bErr } = await supabase.from('boletos').select('*').eq('id', id).single()
+            if (bErr) throw bErr
+
+            // 2. Criar transação de despesa vinculada
+            const { success, error: txErr } = await createTransaction({
+                account_id: accountId,
+                amount: boleto.amount,
+                type: 'expense',
+                description: `Pagto: ${boleto.beneficiary_name}`,
+                date: new Date().toISOString().split('T')[0],
+                notes: `Boleto ID: ${id}`
             })
-            if (!res.ok) {
-                const body = await res.json().catch(() => ({}))
-                throw new Error(body.error || `HTTP ${res.status}`)
-            }
-            await fetchBoletos(initialFilters)
-            return { error: null }
-        } catch (err: unknown) {
-            const message = err instanceof Error ? err.message : 'Erro ao criar boleto'
-            return { error: message }
-        }
-    }, [fetchBoletos, initialFilters])
 
-    const updateBoleto = useCallback(async (id: string, payload: Record<string, unknown>) => {
-        try {
-            const res = await fetch('/api/boletos', {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id, ...payload }),
+            if (!success) throw new Error(txErr || 'Erro ao gerar transação')
+
+            // 3. Atualizar boleto
+            await updateBoleto(id, {
+                status: 'paid',
+                payment_date: new Date().toISOString(),
+                account_id: accountId
             })
-            if (!res.ok) {
-                const body = await res.json().catch(() => ({}))
-                throw new Error(body.error || `HTTP ${res.status}`)
-            }
-            await fetchBoletos(initialFilters)
-            return { error: null }
-        } catch (err: unknown) {
-            const message = err instanceof Error ? err.message : 'Erro ao atualizar boleto'
-            return { error: message }
-        }
-    }, [fetchBoletos, initialFilters])
 
-    const deleteBoleto = useCallback(async (id: string) => {
-        try {
-            const res = await fetch(`/api/boletos?id=${id}`, { method: 'DELETE' })
-            if (!res.ok) {
-                const body = await res.json().catch(() => ({}))
-                throw new Error(body.error || `HTTP ${res.status}`)
-            }
-            await fetchBoletos(initialFilters)
             return { error: null }
-        } catch (err: unknown) {
-            const message = err instanceof Error ? err.message : 'Erro ao excluir boleto'
-            return { error: message }
+        } catch (err: any) {
+            return { error: err.message }
         }
-    }, [fetchBoletos, initialFilters])
+    }, [supabase, updateBoleto, createTransaction])
 
-    const markAsPaid = useCallback(async (id: string) => {
-        return updateBoleto(id, {
-            status: 'paid',
-            payment_date: new Date().toISOString(),
-        })
-    }, [updateBoleto])
+    const exportarCSV = useCallback(() => {
+        const headers = ['Beneficiário', 'Valor', 'Vencimento', 'Status']
+        const rows = boletos.map(b => [
+            b.beneficiary_name,
+            b.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 }),
+            b.due_date,
+            b.status
+        ])
+
+        const BOM = '\uFEFF'
+        const csvContent = BOM + [
+            headers.join(';'),
+            ...rows.map(r => r.join(';'))
+        ].join('\n')
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+        const url = URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+        link.setAttribute('download', 'boletos.csv')
+        link.click()
+    }, [boletos])
 
     return {
         boletos,
@@ -118,7 +129,7 @@ export function useBoletos(initialFilters: BoletoFilters = {}) {
         fetchBoletos,
         createBoleto,
         updateBoleto,
-        deleteBoleto,
         markAsPaid,
+        exportarCSV
     }
 }

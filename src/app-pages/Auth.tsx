@@ -29,7 +29,12 @@ const Auth = () => {
     const socialLogin = async (provider: 'google' | 'github') => {
         await supabase.auth.signInWithOAuth({
             provider,
-            options: { redirectTo: window.location.origin + '/dashboard' }
+            options: {
+                redirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
+                queryParams: {
+                    prompt: 'select_account',
+                }
+            }
         });
     };
 
@@ -55,7 +60,7 @@ const Auth = () => {
                         margin: '0 auto 32px'
                     }}></div>
                     <h1 style={{ fontSize: 36, fontWeight: 700, fontFamily: 'serif', letterSpacing: '-0.02em', color: '#fff', marginBottom: 16 }}>
-                        Aurum<span style={{ color: '#c9a858' }}>Finance</span>
+                        Neural Finance <span style={{ color: '#c9a858' }}>Hub</span>
                     </h1>
                     <p style={{ fontSize: 16, color: '#6b7280', lineHeight: 1.6, marginBottom: 48 }}>
                         Tecnologia financeira de próxima geração.<br />

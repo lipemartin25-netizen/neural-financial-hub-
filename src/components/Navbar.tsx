@@ -9,7 +9,7 @@ const Navbar = () => {
                     <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-gold">
                         <Sparkles size={20} className="text-background" />
                     </div>
-                    <span className="text-xl font-bold tracking-tight text-white">Aurum<span className="text-gold">Finance</span></span>
+                    <span className="text-xl font-bold tracking-tight text-white">Neural <span className="text-gold">Finance Hub</span></span>
                 </div>
 
                 <div className="hidden items-center gap-8 md:flex">

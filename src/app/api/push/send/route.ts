@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ sent: 0, message: 'Nenhuma subscription encontrada' })
         }
         const payload = JSON.stringify({
-            title: title ?? 'AurumFin',
+            title: title ?? 'Neural Finance Hub',
             body: body ?? 'Você tem uma nova notificação',
             icon: '/icons/icon-192x192.png',
             badge: '/icons/icon-72x72.png',

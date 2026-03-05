@@ -8,7 +8,7 @@ type Props = {
     onComplete: () => void
 }
 const STEPS = [
-    { id: 'welcome', title: 'Bem-vindo ao AurumFin!', icon: '✨' },
+    { id: 'welcome', title: 'Bem-vindo ao Neural Finance Hub!', icon: '✨' },
     { id: 'profile', title: 'Seus dados', icon: '👤' },
     { id: 'income', title: 'Renda e Objetivos', icon: '💰' },
     { id: 'accounts', title: 'Contas bancárias', icon: '🏦' },
@@ -115,7 +115,7 @@ export default function Onboarding({ onComplete }: Props) {
                                 <div style={{ textAlign: 'center' }}>
                                     <div style={{ fontSize: 48, marginBottom: 16 }}>✨</div>
                                     <h2 style={{ fontSize: 24, fontWeight: 700, color: C.text, marginBottom: 8 }}>
-                                        Bem-vindo ao <GoldText>AurumFin</GoldText>
+                                        Bem-vindo ao <GoldText>Neural Finance Hub</GoldText>
                                     </h2>
                                     <p style={{ fontSize: 14, color: C.textMuted, lineHeight: 1.6, marginBottom: 24 }}>
                                         Seu assistente financeiro inteligente com IA.

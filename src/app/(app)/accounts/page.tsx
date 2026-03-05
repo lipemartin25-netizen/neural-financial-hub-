@@ -8,6 +8,7 @@ import GoldText from '@/components/GoldText'
 import { toast } from 'sonner'
 import { useAccounts } from '@/hooks/useAccounts'
 import type { Account } from '@/types/database'
+import { PluggyConnectButton } from '@/components/pluggy/PluggyConnectButton'
 
 const ICON_MAP: Record<string, any> = {
     checking: Building2,
@@ -205,6 +206,7 @@ export default function AccountsPage() {
                     <button onClick={() => setShowValues(!showValues)} style={btnOutlineStyle}>
                         {showValues ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
+                    <PluggyConnectButton onSuccess={() => fetchAccounts()} />
                     <button onClick={openCreate} style={btnGoldStyle}><Plus size={16} /> Nova Conta</button>
                 </div>
             </div>
