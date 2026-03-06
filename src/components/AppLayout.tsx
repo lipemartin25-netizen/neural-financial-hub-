@@ -169,7 +169,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         )
     }
 
-    const sidebarBg = theme === 'light' ? '#faf8f4' : '#0d0f14'
+    const sidebarBg = TC.bg
 
     return (
         <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: TC.bg, color: TC.text }}>
@@ -189,7 +189,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             {isMobile && (
                 <div style={{
                     position: 'fixed', top: 0, left: 0, right: 0, height: 56,
-                    backgroundColor: theme === 'light' ? 'rgba(245,243,238,0.9)' : 'rgba(11,13,16,0.9)',
+                    backgroundColor: theme === 'light' ? `${TC.bg}E6` : 'rgba(11,13,16,0.9)',
                     backdropFilter: 'blur(20px)',
                     borderBottom: `1px solid ${TC.border}`,
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',

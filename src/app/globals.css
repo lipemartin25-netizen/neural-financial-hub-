@@ -248,8 +248,8 @@
 /* ===== LIGHT THEME OVERRIDES ===== */
 html.light,
 html.light body {
-    background-color: #f5f3ee !important;
-    color: #1a1a1a !important;
+    background-color: #D3D3D3 !important;
+    color: #1f2937 !important;
     color-scheme: light !important;
 }
 
