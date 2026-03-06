@@ -63,6 +63,9 @@ export default function RegisterPage() {
             provider,
             options: {
                 redirectTo: `${window.location.origin}/auth/callback`,
+                queryParams: {
+                    prompt: 'select_account',
+                },
             },
         })
         if (error) {
