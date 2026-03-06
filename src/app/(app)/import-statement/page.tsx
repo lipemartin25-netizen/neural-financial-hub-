@@ -66,7 +66,7 @@ export default function ImportStatementPage() {
                     Importar Extrato
                 </h1>
                 <p style={{ fontSize: 14, color: C.textMuted, marginTop: 4 }}>
-                    Importe transações automaticamente via PDF ou CSV do seu banco
+                    Importe transações automaticamente via PDF, Foto ou CSV do seu banco
                 </p>
             </motion.div>
 
@@ -76,7 +76,7 @@ export default function ImportStatementPage() {
                     {/* Import Type */}
                     <div style={{ display: 'flex', gap: 12, marginBottom: 24 }}>
                         {[
-                            { v: 'pdf' as const, icon: '📄', label: 'Extrato PDF', desc: 'IA extrai transações automaticamente' },
+                            { v: 'pdf' as const, icon: '📄', label: 'PDF ou Foto', desc: 'IA analisa extrato ou foto automaticamente' },
                             { v: 'csv' as const, icon: '📊', label: 'Arquivo CSV', desc: 'Formato padrão de planilhas' },
                         ].map(t => (
                             <motion.button key={t.v} whileHover={{ scale: 1.02 }} onClick={() => setImportType(t.v)}
@@ -113,7 +113,7 @@ export default function ImportStatementPage() {
 
                         {/* Upload area */}
                         <input ref={fileInputRef} type="file"
-                            accept={importType === 'pdf' ? '.pdf' : '.csv,.txt,.tsv'}
+                            accept={importType === 'pdf' ? '.pdf,image/*' : '.csv,.txt,.tsv'}
                             onChange={handleImport} style={{ display: 'none' }} />
 
                         <button onClick={() => {
@@ -135,17 +135,17 @@ export default function ImportStatementPage() {
                                 <>
                                     <Loader2 size={32} style={{ color: C.gold, animation: 'spin 1s linear infinite' }} />
                                     <p style={{ fontSize: 14, color: C.gold, fontWeight: 500 }}>
-                                        {importType === 'pdf' ? 'IA analisando extrato...' : 'Processando CSV...'}
+                                        {importType === 'pdf' ? 'IA analisando arquivo...' : 'Processando CSV...'}
                                     </p>
                                 </>
                             ) : (
                                 <>
                                     <Upload size={32} style={{ color: C.textMuted }} />
                                     <p style={{ fontSize: 14, color: C.text, fontWeight: 500 }}>
-                                        Clique para selecionar {importType === 'pdf' ? 'PDF' : 'CSV'}
+                                        Clique para selecionar {importType === 'pdf' ? 'PDF ou Foto' : 'CSV'}
                                     </p>
                                     <p style={{ fontSize: 12, color: C.textMuted }}>
-                                        {importType === 'pdf' ? 'Suporta extratos de qualquer banco brasileiro' : 'Separadores: vírgula, ponto-e-vírgula ou tab'}
+                                        {importType === 'pdf' ? 'Suporta extratos e fotos de qualquer banco brasileiro' : 'Separadores: vírgula, ponto-e-vírgula ou tab'}
                                     </p>
                                 </>
                             )}
@@ -157,7 +157,7 @@ export default function ImportStatementPage() {
                         <p style={{ fontSize: 12, color: C.textMuted, lineHeight: 1.6 }}>
                             {importType === 'pdf' ? (
                                 <>
-                                    <strong style={{ color: C.text }}>Como funciona:</strong> O Gemini Vision analisa o PDF do extrato,
+                                    <strong style={{ color: C.text }}>Como funciona:</strong> O Gemini Vision analisa o PDF ou a Foto do extrato,
                                     identifica cada transação (data, descrição, valor) e importa automaticamente.
                                     Funciona com Nubank, Itaú, Bradesco, BB, Inter, C6 e outros.
                                 </>
@@ -219,7 +219,7 @@ export default function ImportStatementPage() {
                             <FileText size={40} style={{ color: 'rgba(107,114,128,0.3)', margin: '0 auto 16px' }} />
                             <p style={{ fontSize: 16, fontWeight: 500, color: C.textMuted }}>Aguardando upload</p>
                             <p style={{ fontSize: 13, color: C.textMuted2, marginTop: 8 }}>
-                                Selecione um arquivo {importType === 'pdf' ? 'PDF' : 'CSV'} para começar
+                                Selecione um arquivo {importType === 'pdf' ? 'PDF ou Foto' : 'CSV'} para começar
                             </p>
                         </div>
                     )}
