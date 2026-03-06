@@ -12,7 +12,7 @@ import {
 import { getThemeColors } from '@/lib/themeColors'
 import GoldText from './GoldText'
 import NotificationCenter from './NotificationCenter'
-import PWARegister from './PWARegister'
+// PWA install popup removido
 import { useApp } from '@/contexts/AppContext'
 import { LOCALES } from '@/lib/i18n'
 
@@ -24,7 +24,7 @@ const MENU_KEYS = [
     { key: 'nav.accounts', icon: Building2, href: '/accounts' },
     { key: 'nav.open_finance', icon: Wifi, href: '/open-finance', highlight: true },
     { key: 'nav.investments', icon: TrendingUp, href: '/investments' },
-    { key: 'nav.patrimony', icon: PieChart, href: '/patrimony' },
+    { key: 'nav.patrimony', icon: PieChart, href: '/patrimonio' },
     { key: 'nav.health', icon: Heart, href: '/health' },
     { key: 'nav.budgets', icon: DollarSign, href: '/budgets' },
     { key: 'nav.goals', icon: Target, href: '/goals' },
@@ -239,7 +239,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             }}>
                 {children}
             </main>
-            <PWARegister />
+
         </div>
     )
 }

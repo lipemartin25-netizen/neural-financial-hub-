@@ -34,11 +34,15 @@ export function PluggyConnectButton({
         try {
             const res = await fetch('/api/open-finance?action=connect_token')
             const data = await res.json()
-            if (!res.ok) throw new Error(data.error || 'Erro ao gerar token')
             if (data.demo) {
-                toast.info('Modo Demo: Configure as chaves no .env')
+                toast.info('Open Finance em modo demo. Acesse a página Open Finance para mais detalhes.', {
+                    description: 'Configure PLUGGY_CLIENT_ID e PLUGGY_CLIENT_SECRET nas variáveis de ambiente da Vercel.',
+                    duration: 6000,
+                })
+                setIsLoading(false)
                 return
             }
+            if (!res.ok) throw new Error(data.error || 'Erro ao gerar token')
             setConnectToken(data.connectToken)
             setIsOpen(true)
         } catch (err: any) {
