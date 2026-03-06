@@ -11,7 +11,11 @@ import { C, cardStyle, cardHlStyle, btnGoldStyle, btnOutlineStyle, fmt } from '@
 import GoldText from '@/components/GoldText'
 import { useDashboard } from '@/hooks/useDashboard'
 import { CATEGORIES } from '@/lib/constants'
-import DashboardCharts from '@/components/DashboardCharts'
+import dynamic from 'next/dynamic'
+const DashboardCharts = dynamic(() => import('@/components/DashboardCharts'), {
+  ssr: false,
+  loading: () => <div style={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Loader2 className="animate-spin" /></div>
+})
 import OnboardingGuard from '@/components/OnboardingGuard'
 import { PluggyConnectButton } from '@/components/pluggy/PluggyConnectButton'
 import { useApp } from '@/contexts/AppContext'
@@ -204,7 +208,7 @@ function DashboardContent() {
                         strokeDasharray={163} strokeDashoffset={163 - (163 * (emergencyData?.progress || 0)) / 100}
                         strokeLinecap="round" />
                     </svg>
-                    <div style={{ position: 'absolute', inset: 0, display: 'flex', items: 'center', justifyContent: 'center' }}>
+                    <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       <span style={{ fontSize: 11, fontWeight: 700, color: TC.gold, textAlign: 'center', alignSelf: 'center' }}>
                         {Math.round(emergencyData?.progress || 0)}%
                       </span>
@@ -229,7 +233,7 @@ function DashboardContent() {
                   <PieChart size={16} style={{ color: TC.gold }} />
                   <h3 style={{ fontSize: 14, fontWeight: 600, color: TC.text }}>Patrimônio Líquido</h3>
                 </div>
-                <div style={{ display: 'flex', items: 'center', gap: 4 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                   {patrimonyData && patrimonyData.changePct !== 0 && (
                     <span style={{ fontSize: 10, fontWeight: 600, color: patrimonyData.changePct >= 0 ? TC.emerald : TC.red }}>
                       {patrimonyData.changePct >= 0 ? '+' : ''}{patrimonyData.changePct}%

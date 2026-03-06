@@ -6,6 +6,7 @@ import { C, cardStyle, cardHlStyle, btnGoldStyle, btnOutlineStyle } from '@/lib/
 import { useApp } from '@/contexts/AppContext'
 import { toast } from 'sonner'
 import dynamic from 'next/dynamic'
+import Image from 'next/image'
 
 // Import dinâmico do widget para evitar erro de 'window is not defined' no SSR
 const PluggyConnect = dynamic(
@@ -206,7 +207,9 @@ export default function OpenFinancePage() {
                             style={{ ...cardStyle, padding: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                                 {conn.connector_logo ? (
-                                    <img src={conn.connector_logo} alt="" style={{ width: 40, height: 40, borderRadius: 10 }} />
+                                    <div style={{ position: 'relative', width: 40, height: 40, borderRadius: 10, overflow: 'hidden' }}>
+                                        <Image src={conn.connector_logo} alt="" fill style={{ objectFit: 'contain' }} />
+                                    </div>
                                 ) : (
                                     <div style={{
                                         width: 40, height: 40, borderRadius: 10, backgroundColor: C.secondary,

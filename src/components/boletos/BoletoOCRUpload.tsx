@@ -4,6 +4,7 @@
 import { useState, useCallback } from 'react'
 import { createWorker } from 'tesseract.js'
 import { Upload, FileText, Loader2, CheckCircle2, AlertTriangle, X } from 'lucide-react'
+import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
 import { C, cardStyle, btnGoldStyle, btnOutlineStyle } from '@/lib/theme'
 
@@ -149,8 +150,8 @@ export default function BoletoOCRUpload({ onDadosExtraidos }: Props) {
             </AnimatePresence>
 
             {preview && (
-                <div style={{ marginTop: 16, borderRadius: 8, overflow: 'hidden', border: `1px solid ${C.border}`, maxHeight: 150 }}>
-                    <img src={preview} alt="Boleto Preview" style={{ width: '100%', height: 'auto', objectFit: 'contain' }} />
+                <div style={{ marginTop: 16, borderRadius: 8, overflow: 'hidden', border: `1px solid ${C.border}`, maxHeight: 150, position: 'relative' }}>
+                    <Image src={preview} alt="Boleto Preview" fill style={{ objectFit: 'contain' }} />
                 </div>
             )}
 
