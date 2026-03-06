@@ -394,8 +394,8 @@ function Footer() {
                             <span style={{ fontSize: 18, fontWeight: 700, color: C.text }}>Neural Finance <GoldText>Hub</GoldText></span>
                         </a>
                         <p style={{ fontSize: 14, color: C.textMuted, lineHeight: 1.6 }}>
-                            O Neural Finance Hub é a evolução definitiva da gestão financeira financeira na nuvem. 
-                            Utilizamos inteligência artificial preditiva e integração Open Finance para 
+                            O Neural Finance Hub é a evolução definitiva da gestão financeira financeira na nuvem.
+                            Utilizamos inteligência artificial preditiva e integração Open Finance para
                             centralizar sua vida, categorizar automaticamente e acelerar sua liberdade financeira.
                         </p>
                     </div>
@@ -425,12 +425,12 @@ function Footer() {
                         </div>
                     </div>
                 </div>
-                
+
                 <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 32, display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
                     <p style={{ fontSize: 13, color: C.textMuted }}>© 2026 Neural Finance Hub. Todos os direitos reservados.</p>
                     <div style={{ display: 'flex', gap: 24, fontSize: 13, color: C.textMuted }}>
-                        <a href="#" style={{ color: 'inherit', textDecoration: 'none', transition: 'color 0.2s' }}>Termos de Uso</a>
-                        <a href="#" style={{ color: 'inherit', textDecoration: 'none', transition: 'color 0.2s' }}>Privacidade</a>
+                        <a href="/terms" style={{ color: 'inherit', textDecoration: 'none', transition: 'color 0.2s' }}>Termos de Uso</a>
+                        <a href="/privacy" style={{ color: 'inherit', textDecoration: 'none', transition: 'color 0.2s' }}>Privacidade</a>
                     </div>
                 </div>
             </div>
