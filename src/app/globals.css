@@ -29,6 +29,33 @@
         --ring: 40 65% 55%;
         --radius: 0.75rem;
         --sidebar-width: 260px;
+
+        /* Semantic Colors for JS theme */
+        --c-bg: #0b0d10;
+        --c-secondary: #181c22;
+        --c-muted: #1e2228;
+        --c-card: #12151a;
+        --c-card-grad: linear-gradient(165deg, #13161c, #0d0f14);
+        --c-card-hl-grad: linear-gradient(165deg, #171a20, #0f1115);
+        --c-text: #ebe6da;
+        --c-text-muted: #6b7280;
+        --c-text-muted2: #4b5563;
+        --c-border: rgba(255, 255, 255, 0.06);
+        --c-border-gold: rgba(201, 168, 88, 0.06);
+    }
+
+    html.light {
+        --c-bg: #D3D3D3;
+        --c-secondary: rgba(0, 0, 0, 0.06);
+        --c-muted: rgba(0, 0, 0, 0.04);
+        --c-card: #B0C4DE;
+        --c-card-grad: linear-gradient(165deg, #B0C4DE, #B9CDDF);
+        --c-card-hl-grad: linear-gradient(165deg, #B9CDDF, #C3D6E5);
+        --c-text: #1f2937;
+        --c-text-muted: #4b5563;
+        --c-text-muted2: #6b7280;
+        --c-border: rgba(0, 0, 0, 0.12);
+        --c-border-gold: rgba(138, 110, 47, 0.2);
     }
 
     * {
@@ -112,12 +139,12 @@
     /* ===== 3D CARD (MetaFin effect + Neural Finance Hub palette) ===== */
     .card-3d {
         position: relative;
-        border: 1px solid hsl(40 65% 55% / 0.06);
-        background: linear-gradient(165deg, hsl(220 18% 9%), hsl(220 20% 6%));
+        border: 1px solid var(--c-border-gold);
+        background: var(--c-card-grad);
         border-radius: 1rem;
         box-shadow:
-            0 1px 0 0 hsl(40 65% 55% / 0.04),
-            inset 0 1px 0 0 hsl(40 65% 55% / 0.03),
+            0 1px 0 0 var(--c-border-gold),
+            inset 0 1px 0 0 var(--c-border-gold),
             0 8px 30px -10px hsl(0 0% 0% / 0.5);
         transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
         overflow: hidden;
@@ -136,12 +163,12 @@
     /* ===== HIGHLIGHT CARD ===== */
     .card-3d-highlight {
         position: relative;
-        border: 1px solid hsl(40 65% 55% / 0.18);
-        background: linear-gradient(165deg, hsl(220 16% 11%), hsl(220 18% 7%));
+        border: 1px solid var(--c-border-gold);
+        background: var(--c-card-hl-grad);
         border-radius: 1rem;
         box-shadow:
-            0 1px 0 0 hsl(40 65% 55% / 0.1),
-            inset 0 1px 0 0 hsl(40 65% 55% / 0.06),
+            0 1px 0 0 var(--c-border-gold),
+            inset 0 1px 0 0 var(--c-border-gold),
             0 12px 40px -10px hsl(0 0% 0% / 0.6),
             0 0 50px -15px hsl(40 65% 55% / 0.1);
         transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
