@@ -168,11 +168,12 @@ export async function POST(request: NextRequest) {
                             }
 
                             // data format
+                            const rawDate = pt.date as any
                             let txDateStr = to
-                            if (pt.date instanceof Date) {
-                                txDateStr = pt.date.toISOString().split('T')[0]
-                            } else if (typeof pt.date === 'string') {
-                                txDateStr = pt.date.split('T')[0]
+                            if (rawDate instanceof Date) {
+                                txDateStr = rawDate.toISOString().split('T')[0]
+                            } else if (typeof rawDate === 'string') {
+                                txDateStr = rawDate.split('T')[0]
                             }
 
                             await supabase.from('transactions').insert({

@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import Index from "@/app-pages/Index";
 import Auth from "@/app-pages/Auth";
 import AppLayout from "@/components/AppLayout";
@@ -26,7 +26,7 @@ const App = () => {
                 <Route path="/register" element={<Auth />} />
 
                 {/* Protected App Routes */}
-                <Route element={<AppLayout />}>
+                <Route element={<AppLayout><Outlet /></AppLayout>}>
                     <Route path="/dashboard" element={<DashboardContent />} />
                     <Route path="/transactions" element={<Transactions />} />
                     <Route path="/cards" element={<Cards />} />

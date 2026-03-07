@@ -104,8 +104,10 @@ export async function POST() {
             const threshold = budget.alert_threshold ?? 80
 
             if (pct >= threshold) {
-                const catName = (budget.categories as { name: string } | null)?.name ?? 'Categoria'
-                const catIcon = (budget.categories as { icon: string } | null)?.icon ?? '📊'
+                const categories = budget.categories as any
+                const catData = Array.isArray(categories) ? categories[0] : categories
+                const catName = catData?.name ?? 'Categoria'
+                const catIcon = catData?.icon ?? '📊'
 
                 const existing = await supabase
                     .from('notifications')

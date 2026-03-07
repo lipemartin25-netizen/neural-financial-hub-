@@ -1,6 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
+import NextImage from 'next/image'
 
 import {
     ArrowRight, Brain, Shield, BarChart3, Zap, Fingerprint, Globe,
@@ -67,7 +68,7 @@ function Navbar() {
         >
             <div style={{ maxWidth: 1152, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px' }}>
                 <a href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
-                    <img src="/logo-neura.png" alt="Logo" style={{ width: 32, height: 32, borderRadius: 8, objectFit: 'contain' }} />
+                    <NextImage src="/logo-neura.png" alt="Logo" width={32} height={32} style={{ borderRadius: 8, objectFit: 'contain' }} />
                     <span style={{ fontSize: 18, fontWeight: 700, color: C.text }}>
                         Neural Finance <GoldText>Hub</GoldText>
                     </span>
@@ -390,7 +391,7 @@ function Footer() {
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 48, marginBottom: 48 }}>
                     <div>
                         <a href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', marginBottom: 16 }}>
-                            <img src="/logo-neura.png" alt="Logo" style={{ width: 28, height: 28, borderRadius: 8, objectFit: 'contain' }} />
+                            <NextImage src="/logo-neura.png" alt="Logo" width={28} height={28} style={{ borderRadius: 8, objectFit: 'contain' }} />
                             <span style={{ fontSize: 18, fontWeight: 700, color: C.text }}>Neural Finance <GoldText>Hub</GoldText></span>
                         </a>
                         <p style={{ fontSize: 14, color: C.textMuted, lineHeight: 1.6 }}>

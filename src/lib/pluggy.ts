@@ -37,7 +37,7 @@ export async function fetchItem(itemId: string) {
 }
 
 export async function fetchInvoices(accountId: string, from?: string, to?: string) {
-    return getPluggyClient().fetchInvoices(accountId, { from, to })
+    return (getPluggyClient() as any).fetchInvoices(accountId, { from, to })
 }
 
 /**

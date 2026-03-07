@@ -84,7 +84,7 @@ export async function POST(request: Request) {
                     await supabase.from('auto_rules').update({
                         times_applied: (matched.times_applied ?? 0) + 1,
                         updated_at: new Date().toISOString(),
-                    }).eq('id', matched.id).catch(() => { })
+                    }).eq('id', matched.id)
                 }
             }
         }
@@ -112,9 +112,9 @@ export async function POST(request: Request) {
 
         // Atualizar saldo da conta automaticamente
         if (type === 'expense') {
-            await supabase.rpc('update_account_balance_subtract', { p_account_id: account_id, p_amount: parseFloat(amount) }).catch(() => { })
+            await supabase.rpc('update_account_balance_subtract', { p_account_id: account_id, p_amount: parseFloat(amount) })
         } else if (type === 'income') {
-            await supabase.rpc('update_account_balance_add', { p_account_id: account_id, p_amount: parseFloat(amount) }).catch(() => { })
+            await supabase.rpc('update_account_balance_add', { p_account_id: account_id, p_amount: parseFloat(amount) })
         }
 
         return NextResponse.json({ data }, { status: 201 })
@@ -212,9 +212,9 @@ export async function DELETE(request: Request) {
         // Reverter saldo da conta
         if (existing.account_id) {
             if (existing.type === 'expense') {
-                await supabase.rpc('update_account_balance_add', { p_account_id: existing.account_id, p_amount: existing.amount }).catch(() => { })
+                await supabase.rpc('update_account_balance_add', { p_account_id: existing.account_id, p_amount: existing.amount })
             } else if (existing.type === 'income') {
-                await supabase.rpc('update_account_balance_subtract', { p_account_id: existing.account_id, p_amount: existing.amount }).catch(() => { })
+                await supabase.rpc('update_account_balance_subtract', { p_account_id: existing.account_id, p_amount: existing.amount })
             }
         }
 

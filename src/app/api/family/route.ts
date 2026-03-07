@@ -164,7 +164,7 @@ export async function POST(request: NextRequest) {
                         title: '👨👩👧 Novo membro na família!',
                         message: `Um novo membro entrou em "${family.name}".`,
                         data: { family_id: family.id },
-                    }).catch(() => { });
+                    })
                 }
 
                 return NextResponse.json({ data: { family_id: family.id, family_name: family.name } })

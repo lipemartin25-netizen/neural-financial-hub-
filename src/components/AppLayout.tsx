@@ -9,6 +9,7 @@ import {
     Settings, Menu, X, LogOut, ChevronLeft, DollarSign, Repeat, Zap,
     TrendingDown, FileUp, Users, Trophy, Sun, Moon, Wifi, Shield,
 } from 'lucide-react'
+import Image from 'next/image'
 import { getThemeColors } from '@/lib/themeColors'
 import GoldText from './GoldText'
 import NeonBackground from './NeonBackground'
@@ -75,7 +76,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     borderBottom: `1px solid ${TC.border}`,
                 }}>
                     <Link href="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
-                        <img src="/logo-neura.png" alt="Logo" style={{ width: 32, height: 32, borderRadius: 8, flexShrink: 0, objectFit: 'contain' }} />
+                        <Image src="/logo-neura.png" alt="Logo" width={32} height={32} style={{ borderRadius: 8, flexShrink: 0, objectFit: 'contain' }} />
                         {showLabel && (
                             <span style={{ fontSize: 16, fontWeight: 700, color: TC.text, whiteSpace: 'nowrap' }}>
                                 Neural Finance <GoldText>Hub</GoldText>

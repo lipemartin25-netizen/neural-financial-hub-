@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { Loader2, Mail, Lock, User, Eye, EyeOff, ArrowRight, Check, Github, Chrome } from 'lucide-react'
 import { createBrowserClient } from '@supabase/ssr'
 import { toast } from 'sonner'
@@ -116,7 +117,7 @@ export default function RegisterPage() {
                     background: 'linear-gradient(165deg, #13161c, #0d0f14)', border: `1px solid ${C.borderGold}`,
                 }}>
                 <div style={{ textAlign: 'center', marginBottom: 28 }}>
-                    <img src="/logo-neura.png" alt="Logo" style={{ width: 48, height: 48, borderRadius: 12, margin: '0 auto 16px', display: 'block', objectFit: 'contain' }} />
+                    <Image src="/logo-neura.png" alt="Logo" width={48} height={48} style={{ borderRadius: 12, margin: '0 auto 16px', display: 'block', objectFit: 'contain' }} />
                     <h1 style={{ fontSize: 22, fontWeight: 700, color: C.text }}>Criar Conta</h1>
                     <p style={{ fontSize: 13, color: C.textMuted, marginTop: 6 }}>
                         Comece a usar o <GoldText>Neural Finance Hub</GoldText>

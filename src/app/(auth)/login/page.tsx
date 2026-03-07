@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { Loader2, Mail, Lock, Eye, EyeOff, ArrowRight, Github, Chrome } from 'lucide-react'
 import { createBrowserClient } from '@supabase/ssr'
 import { toast } from 'sonner'
@@ -100,7 +101,7 @@ export default function LoginPage() {
                 }}>
                 {/* Logo */}
                 <div style={{ textAlign: 'center', marginBottom: 32 }}>
-                    <img src="/logo-neura.png" alt="Logo" style={{ width: 48, height: 48, borderRadius: 12, margin: '0 auto 16px', display: 'block', objectFit: 'contain' }} />
+                    <Image src="/logo-neura.png" alt="Logo" width={48} height={48} style={{ borderRadius: 12, margin: '0 auto 16px', display: 'block', objectFit: 'contain' }} />
                     <h1 style={{ fontSize: 22, fontWeight: 700, color: C.text }}>
                         {mode === 'login' ? 'Entrar' : 'Recuperar Senha'}
                     </h1>

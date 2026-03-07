@@ -99,7 +99,7 @@ export default function DashboardCharts() {
                                         <Cell key={i} fill={entry.color} />
                                     ))}
                                 </Pie>
-                                <Tooltip formatter={(v: number) => fmt(v)} />
+                                <Tooltip formatter={(v: any) => fmt(Number(v))} />
                             </PieChart>
                         </ResponsiveContainer>
                         <div style={{ flex: 1 }}>

@@ -7,7 +7,7 @@ import type { Boleto } from '@/types/database'
 import { useTransactions } from './useTransactions'
 
 export type BoletoFilters = {
-    status?: 'pending' | 'paid' | 'overdue' | 'cancelled' | 'scheduled'
+    status?: 'pending' | 'paid' | 'overdue' | 'cancelled' | 'scheduled' | 'all'
     search?: string
 }
 

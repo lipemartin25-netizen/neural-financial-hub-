@@ -37,6 +37,7 @@ export default function ModalConfirmarPagamento({
         if (open) {
             loadAccounts()
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [open])
 
     async function loadAccounts() {

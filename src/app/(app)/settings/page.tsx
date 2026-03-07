@@ -354,7 +354,7 @@ export default function SettingsPage() {
                         <Crown size={18} style={{ color: C.gold }} /> Plano & Assinatura
                     </h3>
 
-                    <PlanCard currentPlan={profile?.plan ?? 'free'} planStatus={profile?.plan_status} />
+                    <PlanCard currentPlan={profile?.plan ?? 'free'} planStatus={profile?.plan_status ?? undefined} />
                 </motion.div>
 
                 {/* ========== NOTIFICAÇÕES ========== */}

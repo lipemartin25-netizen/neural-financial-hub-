@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import crypto from 'crypto'
 
 // Supabase admin (sem RLS) para webhook
 const supabaseAdmin = createClient(
@@ -11,7 +12,27 @@ export const dynamic = 'force-dynamic'
 
 export async function POST(request: Request) {
     try {
-        const body = await request.json()
+        const bodyText = await request.text()
+        const signature = request.headers.get('x-pluggy-signature')
+        const webhookSecret = process.env.PLUGGY_WEBHOOK_SECRET
+
+        // Validação de assinatura se o segredo estiver configurado
+        if (webhookSecret) {
+            if (!signature) {
+                console.error('[Pluggy Webhook] Signature missing')
+                return NextResponse.json({ error: 'Signature missing' }, { status: 401 })
+            }
+
+            const hmac = crypto.createHmac('sha256', webhookSecret)
+            const digest = hmac.update(bodyText).digest('hex')
+
+            if (signature !== digest) {
+                console.error('[Pluggy Webhook] Invalid signature')
+                return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
+            }
+        }
+
+        const body = JSON.parse(bodyText)
         const { event, data } = body
         console.log('[Pluggy Webhook] Event:', event, 'Data:', JSON.stringify(data))
         if (event === 'item/updated' || event === 'item/created') {

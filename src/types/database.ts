@@ -25,6 +25,7 @@ export interface Database {
                     neural_score: number
                     is_mei: boolean
                     plan: 'free' | 'pro' | 'family' | 'mei'
+                    plan_status: string | null
                     plan_expires_at: string | null
                     stripe_customer_id: string | null
                     onboarding_completed: boolean

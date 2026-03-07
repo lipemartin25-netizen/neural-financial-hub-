@@ -8,7 +8,7 @@ export default function AppGroupLayout({ children }: { children: React.ReactNode
             <AppLayout>
                 {children}
             </AppLayout>
-            <Toaster position="top-right" richColors theme="inherit" />
+            <Toaster position="top-right" richColors theme="dark" />
         </AppProvider>
     )
 }
