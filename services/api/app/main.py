@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from app.documents.router import router as documents_router
 
 app = FastAPI(
     title="Neurafin Hub API",
@@ -15,6 +16,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(documents_router, prefix="/api/v1")
 
 class HealthResponse(BaseModel):
     status: str
@@ -37,5 +40,5 @@ def health_check():
 def get_system_status():
     return SystemStatusResponse(
         online=True,
-        phase="Fase 0 - Bootstrap"
+        phase="Fase 2 - Documentos & Ingestão Assíncrona"
     )

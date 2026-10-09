@@ -91,11 +91,11 @@ class TransactionType(str, Enum):
 class TransactionCreate(BaseModel):
     account_id: uuid.UUID
     category_id: Optional[uuid.UUID] = None
-    document_id: Optional[uuid.UUID] = None -- Anexo documental opcional
+    document_id: Optional[uuid.UUID] = None  # Anexo documental opcional
     type: TransactionType
     amount: float = Field(..., gt=0)
     description: str = Field(..., min_length=1, max_length=255)
-    date: str -- YYYY-MM-DD
+    date: str  # YYYY-MM-DD
     is_confirmed_by_user: bool = True
 
 class TransactionResponse(TransactionCreate):
