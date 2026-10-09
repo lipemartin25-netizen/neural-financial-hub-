@@ -1,0 +1,82 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Neurafin Hub API",
+    "version": "1.0.0",
+    "description": "API compartilhada para gestão de documentos, OCR e finanças do Neurafin Hub."
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "Health Check",
+        "operationId": "getHealth",
+        "responses": {
+          "200": {
+            "description": "API saudável",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/system/status": {
+      "get": {
+        "summary": "Status do Sistema",
+        "operationId": "getSystemStatus",
+        "responses": {
+          "200": {
+            "description": "Status operacional do sistema",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemStatusResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "HealthResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "ok"
+          },
+          "service": {
+            "type": "string",
+            "example": "neurafin-api"
+          },
+          "version": {
+            "type": "string",
+            "example": "1.0.0"
+          }
+        },
+        "required": ["status", "service", "version"]
+      },
+      "SystemStatusResponse": {
+        "type": "object",
+        "properties": {
+          "online": {
+            "type": "boolean",
+            "example": true
+          },
+          "phase": {
+            "type": "string",
+            "example": "Fase 0 - Bootstrap"
+          }
+        },
+        "required": ["online", "phase"]
+      }
+    }
+  }
+}

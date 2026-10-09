@@ -1,0 +1,36 @@
+# Ambientes e Dependências
+node_modules/
+.next/
+out/
+build/
+dist/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+.pytest_cache/
+
+# Android & Gradle
+.gradle/
+build/
+*/build/
+*.apk
+*.aab
+local.properties
+.idea/
+*.iml
+
+# Arquivos de Sistema & IDEs
+.DS_Store
+Thumbs.db
+.vscode/
+
+# Segredos e Variáveis de Ambiente
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
