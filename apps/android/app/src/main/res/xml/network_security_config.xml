@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Configuração de segurança de rede para o Neurafin Hub Android.
+
+    IMPORTANTE: cleartext apenas para 10.0.2.2 (endereço do host no emulador AVD).
+    Em produção, o backend deve obrigatoriamente expor HTTPS — remover cleartext.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+
+    <!-- Exceção de desenvolvimento: emulador AVD aponta para o host como 10.0.2.2 -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">10.0.2.2</domain>
+    </domain-config>
+</network-security-config>

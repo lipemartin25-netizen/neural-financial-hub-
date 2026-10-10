@@ -50,10 +50,10 @@ Nenhum item deve ser marcado como concluído sem evidência empírica verificáv
 - [x] Revisão de acessibilidade e design tokens.
 
 ### Etapa 5 — Android nativo funcional
-- [ ] Telas nativas em Jetpack Compose consumindo contratos compartilhados.
-- [ ] Banco de dados local Room e sincronização fora da UI thread via WorkManager.
-- [ ] Fila idempotente e tratamento de conflitos offline.
-- [ ] Compilação em ambiente compatível / emulador.
+- [x] Telas nativas em Jetpack Compose consumindo contratos compartilhados.
+- [x] Banco de dados local Room e sincronização fora da UI thread via WorkManager.
+- [x] Fila idempotente e tratamento de conflitos offline.
+- [ ] Compilação em ambiente compatível / emulador. (**BLOQUEADO**: JDK 17 não instalado. Ver stage-5-report.md)
 
 ### Etapa 6 — Finanças manuais, relatórios e legado
 - [ ] Lançamentos manuais de receitas, despesas, contas e orçamentos.
