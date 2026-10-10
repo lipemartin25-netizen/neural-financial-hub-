@@ -176,3 +176,48 @@ def update_document_sector(
         status_code=status.HTTP_404_NOT_FOUND,
         detail="Documento não encontrado ou acesso não autorizado."
     )
+
+
+@router.post("/process-jobs", status_code=status.HTTP_200_OK)
+def trigger_process_jobs(
+    current_user: AuthenticatedUser = Depends(get_current_user)
+):
+    """
+    Executa o ciclo do worker assíncrono para os jobs pendentes,
+    atualizando honestamente o status, score de confiança e setor sugerido de cada documento.
+    """
+    processed_count = 0
+    while True:
+        job = process_next_job()
+        if not job:
+            break
+        processed_count += 1
+        
+        user_id = job["user_id"]
+        doc_id = job["document_id"]
+        result = job.get("result", {})
+        
+        user_docs = _get_user_docs(user_id)
+        user_sectors = _get_user_sectors(user_id)
+        
+        target_doc = next((d for d in user_docs if d["id"] == doc_id), None)
+        if target_doc and result:
+            target_doc["status"] = result.get("document_status", DocumentStatus.REVIEW_REQUIRED)
+            target_doc["confidence_score"] = result.get("confidence_score", 0.0)
+            
+            suggested_name = result.get("suggested_sector")
+            if suggested_name:
+                matched_sec = next((s for s in user_sectors if s["name"].lower() == suggested_name.lower()), None)
+                if matched_sec:
+                    target_doc["suggested_sector_id"] = matched_sec["id"]
+                    if target_doc["sector_id"] is None and target_doc["status"] == DocumentStatus.READY:
+                        target_doc["sector_id"] = matched_sec["id"]
+            
+            target_doc["updated_at"] = datetime.now()
+
+    return {
+        "status": "success",
+        "processed_jobs": processed_count,
+        "message": f"{processed_count} jobs processados pelo worker."
+    }
+

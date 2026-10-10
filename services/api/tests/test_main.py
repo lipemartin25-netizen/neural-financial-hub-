@@ -44,3 +44,34 @@ def test_upload_document_flow_authenticated():
     assert data["file_name"] == "extrato_bancario.txt"
     assert data["status"] == "pending_processing"
     assert data["user_id"] == str(DEFAULT_USER_ID)
+
+def test_auth_generate_token():
+    payload = {"email": "novo.usuario@neurafin.com"}
+    response = client.post("/api/v1/auth/token", json=payload)
+    assert response.status_code == 200
+    data = response.json()
+    assert "access_token" in data
+    assert data["email"] == "novo.usuario@neurafin.com"
+    assert "user_id" in data
+
+def test_process_jobs_updates_document():
+    # 1. Faz upload de documento
+    file_payload = {"file": ("recibo_consulta.txt", b"Consulta medica e receita clinica Saude doutor CRM", "text/plain")}
+    res_up = client.post("/api/v1/documents/upload", headers=DEFAULT_AUTH_HEADER, files=file_payload)
+    assert res_up.status_code == 202
+    doc_id = res_up.json()["id"]
+
+    # 2. Executa processamento
+    res_job = client.post("/api/v1/documents/process-jobs", headers=DEFAULT_AUTH_HEADER)
+    assert res_job.status_code == 200
+    assert res_job.json()["processed_jobs"] >= 1
+
+    # 3. Lista documentos e verifica se o status foi atualizado
+    res_list = client.get("/api/v1/documents", headers=DEFAULT_AUTH_HEADER)
+    assert res_list.status_code == 200
+    docs = res_list.json()
+    doc = next(d for d in docs if d["id"] == doc_id)
+    assert doc["status"] == "ready"
+    assert doc["confidence_score"] >= 0.60
+    assert doc["suggested_sector_id"] is not None
+

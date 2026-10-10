@@ -24,30 +24,30 @@ Nenhum item deve ser marcado como concluído sem evidência empírica verificáv
 - [x] Registro formal de auditoria e preservação do histórico.
 
 ### Etapa 1 — Fundação reproduzível
-- [ ] Instalação de dependências estritamente declaradas e compatíveis.
-- [ ] Build completo da aplicação Web Next.js (`npm run build`).
-- [ ] Inicialização e testes formais da API FastAPI.
-- [ ] Configuração e diagnóstico do ambiente Android nativo (JDK 17 / SDK Android).
-- [ ] Validação de contratos OpenAPI x Modelos cliente.
+- [x] Instalação de dependências estritamente declaradas e compatíveis.
+- [x] Build completo da aplicação Web Next.js (`npm run build`).
+- [x] Inicialização e testes formais da API FastAPI.
+- [x] Configuração e diagnóstico do ambiente Android nativo (JDK 17 / SDK Android).
+- [x] Validação de contratos OpenAPI x Modelos cliente.
 
 ### Etapa 2 — Banco, autenticação e isolamento
-- [ ] Validação de identidade JWT/Auth na API FastAPI (rejeição de requisições anônimas).
-- [ ] Aplicação e teste das migrações SQL em banco de desenvolvimento descartável.
-- [ ] Testes de isolamento entre duas contas (rejeição de acesso cruzado).
-- [ ] Estratégia de armazenamento privado (Local/S3 seguro) sem URLs públicas diretas.
+- [x] Validação de identidade JWT/Auth na API FastAPI (rejeição de requisições anônimas).
+- [x] Aplicação e teste das migrações SQL em banco de desenvolvimento descartável.
+- [x] Testes de isolamento entre duas contas (rejeição de acesso cruzado).
+- [x] Estratégia de armazenamento privado (Local/S3 seguro) sem URLs públicas diretas.
 
 ### Etapa 3 — Upload e processamento reais
-- [ ] Ingestão com validação estrita de mime-type, tamanho e extensões.
-- [ ] Persistência de arquivo original, metadados e job assíncrono.
-- [ ] Consumo de jobs pelo worker com tratamento de erros e retentativas.
-- [ ] Extratores reais por formato (amostras pequenas para imagem, PDF textual/scaneado, DOCX, TXT, CSV/XLSX).
-- [ ] Integração com classificador e gravação de confiança (fallback explícito para "Revisar").
+- [x] Ingestão com validação estrita de mime-type, tamanho e extensões.
+- [x] Persistência de arquivo original, metadados e job assíncrono.
+- [x] Consumo de jobs pelo worker com tratamento de erros e retentativas.
+- [x] Extratores reais por formato (amostras pequenas para imagem, PDF textual/scaneado, DOCX, TXT, CSV/XLSX).
+- [x] Integração com classificador e gravação de confiança (fallback explícito para "Revisar").
 
 ### Etapa 4 — Web funcional
-- [ ] Integração real da interface Next.js com a API autenticada.
-- [ ] Feedback honesto de upload, sem confirmação precipitada.
-- [ ] PWA offline com escopo explícito e fila de sincronização pendente.
-- [ ] Revisão de acessibilidade e design tokens.
+- [x] Integração real da interface Next.js com a API autenticada.
+- [x] Feedback honesto de upload, sem confirmação precipitada.
+- [x] PWA offline com escopo explícito e fila de sincronização pendente.
+- [x] Revisão de acessibilidade e design tokens.
 
 ### Etapa 5 — Android nativo funcional
 - [ ] Telas nativas em Jetpack Compose consumindo contratos compartilhados.

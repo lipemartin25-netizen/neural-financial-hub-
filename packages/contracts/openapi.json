@@ -41,41 +41,341 @@
           }
         }
       }
+    },
+    "/api/v1/auth/token": {
+      "post": {
+        "summary": "Gera token JWT",
+        "operationId": "generateToken",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TokenRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Token gerado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Parâmetros inválidos"
+          }
+        }
+      }
+    },
+    "/api/v1/documents/sectors": {
+      "get": {
+        "summary": "Lista setores do usuário autenticado",
+        "operationId": "listSectors",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Lista de setores",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/SectorResponse" }
+                }
+              }
+            }
+          },
+          "401": { "description": "Não autenticado" }
+        }
+      },
+      "post": {
+        "summary": "Cria um novo setor",
+        "operationId": "createSector",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SectorCreate" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Setor criado",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SectorResponse" }
+              }
+            }
+          },
+          "401": { "description": "Não autenticado" }
+        }
+      }
+    },
+    "/api/v1/documents": {
+      "get": {
+        "summary": "Lista documentos do usuário autenticado",
+        "operationId": "listDocuments",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "sector_id",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "doc_status",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de documentos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/DocumentResponse" }
+                }
+              }
+            }
+          },
+          "401": { "description": "Não autenticado" }
+        }
+      }
+    },
+    "/api/v1/documents/upload": {
+      "post": {
+        "summary": "Upload assíncrono de documento",
+        "operationId": "uploadDocument",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": { "type": "string", "format": "binary" },
+                  "sector_id": { "type": "string", "format": "uuid" }
+                },
+                "required": ["file"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Documento recebido e enfileirado",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DocumentResponse" }
+              }
+            }
+          },
+          "400": { "description": "Arquivo vazio ou inválido" },
+          "401": { "description": "Não autenticado" },
+          "413": { "description": "Arquivo excede limite de tamanho (25MB)" }
+        }
+      }
+    },
+    "/api/v1/documents/{document_id}/download": {
+      "get": {
+        "summary": "Download seguro do arquivo original",
+        "operationId": "downloadDocument",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "document_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Arquivo binário original",
+            "content": {
+              "application/octet-stream": {
+                "schema": { "type": "string", "format": "binary" }
+              }
+            }
+          },
+          "401": { "description": "Não autenticado" },
+          "404": { "description": "Documento não encontrado ou isolamento rejeitado" }
+        }
+      }
+    },
+    "/api/v1/documents/{document_id}/sector": {
+      "patch": {
+        "summary": "Atualiza ou confirma setor de um documento",
+        "operationId": "updateDocumentSector",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "document_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "sector_id": { "type": "string", "format": "uuid" }
+                },
+                "required": ["sector_id"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Setor atualizado",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DocumentResponse" }
+              }
+            }
+          },
+          "401": { "description": "Não autenticado" },
+          "404": { "description": "Documento não encontrado" }
+        }
+      }
+    },
+    "/api/v1/documents/process-jobs": {
+      "post": {
+        "summary": "Executa ciclo do worker assíncrono para os jobs pendentes",
+        "operationId": "processDocumentJobs",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Ciclo de processamento executado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string" },
+                    "processed_jobs": { "type": "integer" },
+                    "message": { "type": "string" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Não autenticado" }
+        }
+      }
     }
   },
   "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
     "schemas": {
       "HealthResponse": {
         "type": "object",
         "properties": {
-          "status": {
-            "type": "string",
-            "example": "ok"
-          },
-          "service": {
-            "type": "string",
-            "example": "neurafin-api"
-          },
-          "version": {
-            "type": "string",
-            "example": "1.0.0"
-          }
+          "status": { "type": "string", "example": "ok" },
+          "service": { "type": "string", "example": "neurafin-api" },
+          "version": { "type": "string", "example": "1.0.0" }
         },
         "required": ["status", "service", "version"]
       },
       "SystemStatusResponse": {
         "type": "object",
         "properties": {
-          "online": {
-            "type": "boolean",
-            "example": true
-          },
-          "phase": {
-            "type": "string",
-            "example": "Fase 0 - Bootstrap"
-          }
+          "online": { "type": "boolean", "example": true },
+          "phase": { "type": "string", "example": "Fase 4 - Interface Web & Gestão Documental" }
         },
         "required": ["online", "phase"]
+      },
+      "TokenRequest": {
+        "type": "object",
+        "properties": {
+          "email": { "type": "string", "example": "usuario@neurafin.com" },
+          "user_id": { "type": "string", "format": "uuid" }
+        },
+        "required": ["email"]
+      },
+      "TokenResponse": {
+        "type": "object",
+        "properties": {
+          "access_token": { "type": "string" },
+          "token_type": { "type": "string", "example": "bearer" },
+          "user_id": { "type": "string", "format": "uuid" },
+          "email": { "type": "string" }
+        },
+        "required": ["access_token", "token_type", "user_id", "email"]
+      },
+      "SectorCreate": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string", "example": "Investimentos" },
+          "color": { "type": "string", "example": "#c9a858" },
+          "is_default": { "type": "boolean", "default": false }
+        },
+        "required": ["name"]
+      },
+      "SectorResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "user_id": { "type": "string", "format": "uuid" },
+          "name": { "type": "string" },
+          "color": { "type": "string" },
+          "is_default": { "type": "boolean" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" }
+        },
+        "required": ["id", "user_id", "name", "color", "is_default", "created_at", "updated_at"]
+      },
+      "DocumentResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "user_id": { "type": "string", "format": "uuid" },
+          "sector_id": { "type": "string", "format": "uuid", "nullable": true },
+          "file_name": { "type": "string" },
+          "file_size": { "type": "integer" },
+          "mime_type": { "type": "string" },
+          "status": {
+            "type": "string",
+            "enum": [
+              "received",
+              "pending_processing",
+              "processing",
+              "ready",
+              "review_required",
+              "read_unavailable",
+              "error"
+            ]
+          },
+          "suggested_sector_id": { "type": "string", "format": "uuid", "nullable": true },
+          "confidence_score": { "type": "number", "minimum": 0, "maximum": 1 },
+          "version": { "type": "integer" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" }
+        },
+        "required": ["id", "user_id", "file_name", "file_size", "mime_type", "status", "version", "created_at", "updated_at"]
       }
     }
   }

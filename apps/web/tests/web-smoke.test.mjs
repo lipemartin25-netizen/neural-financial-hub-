@@ -16,5 +16,9 @@ test('Web package.json existe e possui scripts essenciais', () => {
 test('Estrutura Next.js essencial está presente', () => {
   assert.ok(fs.existsSync(path.resolve('src/app/layout.tsx')), 'layout.tsx deve existir');
   assert.ok(fs.existsSync(path.resolve('src/app/page.tsx')), 'page.tsx deve existir');
+  assert.ok(fs.existsSync(path.resolve('src/app/documents/page.tsx')), 'documents/page.tsx deve existir');
+  assert.ok(fs.existsSync(path.resolve('src/lib/api/documents.ts')), 'documents.ts deve existir');
+  assert.ok(fs.existsSync(path.resolve('src/lib/offline/sync-manager.ts')), 'sync-manager.ts deve existir');
+  assert.ok(fs.existsSync(path.resolve('public/manifest.json')), 'manifest.json deve existir');
   assert.ok(fs.existsSync(path.resolve('tsconfig.json')), 'tsconfig.json deve existir');
 });

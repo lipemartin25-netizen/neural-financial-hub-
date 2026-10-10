@@ -1,0 +1,21 @@
+{
+  "name": "Neurafin Hub",
+  "short_name": "Neurafin",
+  "description": "Hub Privado e Seguro de Gestão Documental, OCR e Finanças Pessoais",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0b0d10",
+  "theme_color": "#0b0d10",
+  "icons": [
+    {
+      "src": "/logo.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg"
+    },
+    {
+      "src": "/logo.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg"
+    }
+  ]
+}
