@@ -9,18 +9,16 @@ from app.schemas import (
     SectorResponse, SectorCreate,
     DocumentResponse, DocumentStatus, DocumentUpdateSector
 )
+from services.worker.pipeline import enqueue_document_job, process_next_job
 
 router = APIRouter(prefix="/documents", tags=["Documentos"])
 
-# Repositório isolado por usuário em memória (preparado para multi-tenant real)
-# Cada chave é o UUID do usuário; os dados de uma conta nunca se misturam com os de outra
 USER_SECTORS: dict[uuid.UUID, list[dict]] = {}
 USER_DOCUMENTS: dict[uuid.UUID, list[dict]] = {}
 USER_FILES: dict[uuid.UUID, dict[uuid.UUID, bytes]] = {}
 
 def _get_user_sectors(user_id: uuid.UUID) -> list[dict]:
     if user_id not in USER_SECTORS:
-        # Inicializa com setores padrão se for o primeiro acesso da conta
         USER_SECTORS[user_id] = [
             {"id": uuid.uuid4(), "user_id": user_id, "name": "Financeiro", "color": "#10b981", "is_default": True, "created_at": datetime.now(), "updated_at": datetime.now()},
             {"id": uuid.uuid4(), "user_id": user_id, "name": "Comprovantes", "color": "#c9a858", "is_default": True, "created_at": datetime.now(), "updated_at": datetime.now()},
@@ -43,7 +41,6 @@ def _get_user_files(user_id: uuid.UUID) -> dict[uuid.UUID, bytes]:
 
 @router.get("/sectors", response_model=List[SectorResponse])
 def list_sectors(current_user: AuthenticatedUser = Depends(get_current_user)):
-    """Retorna os setores disponíveis exclusivamente para a conta autenticada."""
     return _get_user_sectors(current_user.id)
 
 
@@ -52,7 +49,6 @@ def create_sector(
     sector_in: SectorCreate,
     current_user: AuthenticatedUser = Depends(get_current_user)
 ):
-    """Cria um setor personalizado no domínio exclusivo do usuário autenticado."""
     sectors = _get_user_sectors(current_user.id)
     new_sector = {
         "id": uuid.uuid4(),
@@ -73,7 +69,6 @@ def list_documents(
     doc_status: Optional[DocumentStatus] = None,
     current_user: AuthenticatedUser = Depends(get_current_user)
 ):
-    """Lista documentos privados da conta autenticada. Nenhuma outra conta tem visibilidade."""
     docs = _get_user_docs(current_user.id)
     if sector_id:
         docs = [d for d in docs if d["sector_id"] == sector_id]
@@ -89,14 +84,19 @@ async def upload_document(
     current_user: AuthenticatedUser = Depends(get_current_user)
 ):
     """
-    Ingestão privada e autenticada:
-    1. Vincula estritamente ao user_id do token autenticado.
-    2. Armazena bytes em cofre privado isolado por usuário.
-    3. Nenhum link público permanente é gerado.
+    Ingestão assíncrona robusta:
+    1. Valida tamanho do arquivo.
+    2. Persiste cópia binária no cofre privado.
+    3. Registra documento em estado 'pending_processing'.
+    4. Enfileira job assíncrono para o worker.
     """
     file_bytes = await file.read()
     if len(file_bytes) == 0:
         raise HTTPException(status_code=400, detail="Arquivo vazio não é permitido.")
+
+    # Limite máximo de segurança inicial: 25MB
+    if len(file_bytes) > 25 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="Tamanho de arquivo excede o limite máximo permitido (25MB).")
 
     sec_id = uuid.UUID(sector_id) if sector_id else None
     doc_id = uuid.uuid4()
@@ -119,6 +119,15 @@ async def upload_document(
     _get_user_docs(current_user.id).append(doc)
     _get_user_files(current_user.id)[doc_id] = file_bytes
     
+    # Enfileira processamento assíncrono real
+    enqueue_document_job(
+        document_id=doc_id,
+        user_id=current_user.id,
+        file_name=doc["file_name"],
+        mime_type=doc["mime_type"],
+        file_bytes=file_bytes
+    )
+    
     return doc
 
 
@@ -127,16 +136,10 @@ def download_document(
     document_id: uuid.UUID,
     current_user: AuthenticatedUser = Depends(get_current_user)
 ):
-    """
-    Entrega segura do arquivo original:
-    Valida rigorosamente se o documento pertence ao usuário autenticado.
-    Retorna 404/403 se qualquer outro usuário tentar fazer o download.
-    """
     user_docs = _get_user_docs(current_user.id)
     target_doc = next((d for d in user_docs if d["id"] == document_id), None)
     
     if not target_doc:
-        # Não encontrado na conta autenticada (evita enumerar existência de documentos de terceiros)
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Documento não encontrado ou acesso não autorizado."
@@ -161,7 +164,6 @@ def update_document_sector(
     body: DocumentUpdateSector,
     current_user: AuthenticatedUser = Depends(get_current_user)
 ):
-    """Permite ao usuário autenticado corrigir ou reclassificar o setor de seu próprio documento."""
     user_docs = _get_user_docs(current_user.id)
     for d in user_docs:
         if d["id"] == document_id:
