@@ -340,24 +340,22 @@ CREATE TABLE IF NOT EXISTS public.boletos (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 18. OPEN_FINANCE_CONNECTIONS (v3)
+-- 18. OPEN_FINANCE_CONNECTIONS (v3 — alinhado com Pluggy SDK)
 CREATE TABLE IF NOT EXISTS public.open_finance_connections (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-  institution_id TEXT NOT NULL,
-  institution_name TEXT NOT NULL,
-  institution_logo TEXT,
-  consent_id TEXT NOT NULL UNIQUE,
-  consent_status TEXT DEFAULT 'active' CHECK (consent_status IN ('pending', 'active', 'expired', 'revoked')),
-  consent_expires_at TIMESTAMPTZ,
-  permissions TEXT[],
+  provider TEXT NOT NULL DEFAULT 'pluggy',
+  item_id TEXT NOT NULL,
+  connector_name TEXT,
+  connector_logo TEXT,
+  status TEXT DEFAULT 'active' CHECK (status IN ('active', 'outdated', 'login_error', 'revoked')),
   last_sync_at TIMESTAMPTZ,
   sync_status TEXT DEFAULT 'idle' CHECK (sync_status IN ('idle', 'syncing', 'success', 'error')),
   sync_error TEXT,
   total_synced_transactions INT DEFAULT 0,
-  accounts_linked UUID[],
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, item_id)
 );
 
 -- 19. OPEN_FINANCE_SYNC_LOG (v3)
@@ -508,7 +506,7 @@ CREATE INDEX IF NOT EXISTS idx_boletos_user ON public.boletos(user_id, due_date 
 CREATE INDEX IF NOT EXISTS idx_boletos_status ON public.boletos(status) WHERE status IN ('pending', 'overdue');
 CREATE INDEX IF NOT EXISTS idx_boletos_due ON public.boletos(due_date) WHERE status = 'pending';
 CREATE INDEX IF NOT EXISTS idx_of_connections_user ON public.open_finance_connections(user_id);
-CREATE INDEX IF NOT EXISTS idx_of_connections_status ON public.open_finance_connections(consent_status);
+CREATE INDEX IF NOT EXISTS idx_of_connections_item ON public.open_finance_connections(item_id);
 CREATE INDEX IF NOT EXISTS idx_simulations_user ON public.wealth_lab_simulations(user_id, type);
 CREATE INDEX IF NOT EXISTS idx_academy_user ON public.academy_progress(user_id);
 CREATE INDEX IF NOT EXISTS idx_mei_revenue_user ON public.mei_revenue(user_id, year DESC, month DESC);

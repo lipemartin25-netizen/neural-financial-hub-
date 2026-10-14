@@ -1,0 +1,602 @@
+export type Json =
+    | string
+    | number
+    | boolean
+    | null
+    | { [key: string]: Json | undefined }
+    | Json[]
+
+export interface Database {
+    public: {
+        Tables: {
+            profiles: {
+                Row: {
+                    id: string
+                    email: string
+                    full_name: string | null
+                    avatar_url: string | null
+                    phone: string | null
+                    date_of_birth: string | null
+                    currency: string
+                    locale: string
+                    timezone: string
+                    monthly_income: number | null
+                    financial_goal: string | null
+                    neural_score: number
+                    is_mei: boolean
+                    plan: 'free' | 'pro' | 'family' | 'mei'
+                    plan_status: string | null
+                    plan_expires_at: string | null
+                    stripe_customer_id: string | null
+                    onboarding_completed: boolean
+                    created_at: string
+                    updated_at: string
+                }
+                Insert: {
+                    id: string
+                    email: string
+                    full_name?: string | null
+                    avatar_url?: string | null
+                    phone?: string | null
+                    currency?: string
+                    plan?: 'free' | 'pro' | 'family' | 'mei'
+                    onboarding_completed?: boolean
+                }
+                Update: {
+                    full_name?: string | null
+                    avatar_url?: string | null
+                    phone?: string | null
+                    monthly_income?: number | null
+                    plan?: 'free' | 'pro' | 'family' | 'mei'
+                    onboarding_completed?: boolean
+                    neural_score?: number
+                }
+            }
+            accounts: {
+                Row: {
+                    id: string
+                    user_id: string
+                    family_id: string | null
+                    name: string
+                    type: 'checking' | 'savings' | 'credit_card' | 'investment' | 'cash' | 'wallet' | 'other'
+                    bank_name: string | null
+                    bank_code: string | null
+                    bank_logo: string | null
+                    balance: number
+                    credit_limit: number | null
+                    available_credit: number | null
+                    closing_day: number | null
+                    due_day: number | null
+                    color: string
+                    icon: string | null
+                    is_active: boolean
+                    include_in_total: boolean
+                    open_finance_id: string | null
+                    is_shared: boolean
+                    created_at: string
+                    updated_at: string
+                }
+                Insert: {
+                    user_id: string
+                    name: string
+                    type: 'checking' | 'savings' | 'credit_card' | 'investment' | 'cash' | 'wallet' | 'other'
+                    bank_name?: string | null
+                    balance?: number
+                    credit_limit?: number | null
+                    color?: string
+                }
+                Update: {
+                    name?: string
+                    balance?: number
+                    is_active?: boolean
+                    include_in_total?: boolean
+                    color?: string
+                }
+            }
+            categories: {
+                Row: {
+                    id: string
+                    user_id: string | null
+                    name: string
+                    type: 'income' | 'expense' | 'transfer'
+                    icon: string | null
+                    color: string
+                    is_default: boolean
+                    parent_id: string | null
+                    created_at: string
+                }
+                Insert: {
+                    user_id?: string | null
+                    name: string
+                    type: 'income' | 'expense' | 'transfer'
+                    icon?: string | null
+                    color?: string
+                    is_default?: boolean
+                }
+                Update: {
+                    name?: string
+                    icon?: string | null
+                    color?: string
+                }
+            }
+            transactions: {
+                Row: {
+                    id: string
+                    user_id: string
+                    account_id: string
+                    category_id: string | null
+                    family_id: string | null
+                    amount: number
+                    type: 'income' | 'expense' | 'transfer'
+                    description: string
+                    notes: string | null
+                    date: string
+                    is_recurring: boolean
+                    recurring_frequency: string | null
+                    recurring_end_date: string | null
+                    parent_transaction_id: string | null
+                    tags: string[] | null
+                    transfer_account_id: string | null
+                    invoice_id: string | null
+                    installments: number | null
+                    installment_number: number | null
+                    open_finance_id: string | null
+                    ai_categorized: boolean
+                    ai_confidence: number | null
+                    ai_reviewed: boolean
+                    receipt_url: string | null
+                    latitude: number | null
+                    longitude: number | null
+                    created_at: string
+                    updated_at: string
+                }
+                Insert: {
+                    user_id: string
+                    account_id: string
+                    amount: number
+                    type: 'income' | 'expense' | 'transfer'
+                    description: string
+                    date?: string
+                    category_id?: string | null
+                    notes?: string | null
+                    is_recurring?: boolean
+                    tags?: string[] | null
+                }
+                Update: {
+                    amount?: number
+                    description?: string
+                    category_id?: string | null
+                    notes?: string | null
+                    date?: string
+                    ai_reviewed?: boolean
+                }
+            }
+            budgets: {
+                Row: {
+                    id: string
+                    user_id: string
+                    category_id: string
+                    amount: number
+                    period: 'weekly' | 'monthly' | 'yearly'
+                    month: number | null
+                    year: number | null
+                    alert_threshold: number
+                    created_at: string
+                    updated_at: string
+                }
+                Insert: {
+                    user_id: string
+                    category_id: string
+                    amount: number
+                    period?: 'weekly' | 'monthly' | 'yearly'
+                    month?: number | null
+                    year?: number | null
+                    alert_threshold?: number
+                }
+                Update: {
+                    amount?: number
+                    alert_threshold?: number
+                }
+            }
+            goals: {
+                Row: {
+                    id: string
+                    user_id: string
+                    family_id: string | null
+                    account_id: string | null
+                    name: string
+                    description: string | null
+                    target_amount: number
+                    current_amount: number
+                    target_date: string | null
+                    icon: string
+                    color: string
+                    category: string
+                    priority: number
+                    is_completed: boolean
+                    completed_at: string | null
+                    is_shared: boolean
+                    monthly_contribution: number | null
+                    created_at: string
+                    updated_at: string
+                }
+                Insert: {
+                    user_id: string
+                    name: string
+                    target_amount: number
+                    category?: string
+                    icon?: string
+                    color?: string
+                    priority?: number
+                }
+                Update: {
+                    name?: string
+                    target_amount?: number
+                    current_amount?: number
+                    is_completed?: boolean
+                }
+            }
+            bills: {
+                Row: {
+                    id: string
+                    user_id: string
+                    account_id: string | null
+                    category_id: string | null
+                    name: string
+                    amount: number
+                    type: 'income' | 'expense'
+                    frequency: string
+                    due_day: number | null
+                    next_due_date: string | null
+                    last_paid_date: string | null
+                    is_active: boolean
+                    auto_pay: boolean
+                    reminder_days: number
+                    notes: string | null
+                    created_at: string
+                    updated_at: string
+                }
+                Insert: {
+                    user_id: string
+                    name: string
+                    amount: number
+                    frequency: string
+                    type?: 'income' | 'expense'
+                    due_day?: number | null
+                    next_due_date?: string | null
+                }
+                Update: {
+                    name?: string
+                    amount?: number
+                    is_active?: boolean
+                    next_due_date?: string | null
+                    last_paid_date?: string | null
+                }
+            }
+            boletos: {
+                Row: {
+                    id: string
+                    user_id: string
+                    account_id: string | null
+                    barcode: string | null
+                    digitable_line: string | null
+                    amount: number
+                    discount_amount: number | null
+                    fine_amount: number | null
+                    final_amount: number | null
+                    beneficiary_name: string | null
+                    beneficiary_document: string | null
+                    payer_name: string | null
+                    due_date: string
+                    payment_date: string | null
+                    category_id: string | null
+                    type: string
+                    dda_detected: boolean
+                    status: 'pending' | 'paid' | 'overdue' | 'cancelled' | 'scheduled'
+                    is_recurring: boolean
+                    bill_id: string | null
+                    notes: string | null
+                    ai_categorized: boolean
+                    ai_confidence: number | null
+                    created_at: string
+                    updated_at: string
+                }
+                Insert: {
+                    user_id: string
+                    account_id?: string | null
+                    amount: number
+                    due_date: string
+                    type?: string
+                    status?: 'pending' | 'paid' | 'overdue' | 'cancelled' | 'scheduled'
+                    beneficiary_name?: string | null
+                    barcode?: string | null
+                }
+                Update: {
+                    status?: 'pending' | 'paid' | 'overdue' | 'cancelled' | 'scheduled'
+                    payment_date?: string | null
+                    notes?: string | null
+                    account_id?: string | null
+                }
+            }
+            notifications: {
+                Row: {
+                    id: string
+                    user_id: string
+                    type: string
+                    title: string
+                    message: string
+                    data: Json | null
+                    is_read: boolean
+                    read_at: string | null
+                    created_at: string
+                }
+                Insert: {
+                    user_id: string
+                    type: string
+                    title: string
+                    message: string
+                    data?: Json | null
+                }
+                Update: {
+                    is_read?: boolean
+                    read_at?: string | null
+                }
+            }
+            wealth_lab_simulations: {
+                Row: {
+                    id: string
+                    user_id: string
+                    type: 'independence' | 'retirement' | 'investment' | 'tax_planning' | 'objective' | 'mei_projection'
+                    name: string
+                    inputs: Json
+                    results: Json
+                    is_favorite: boolean
+                    notes: string | null
+                    created_at: string
+                    updated_at: string
+                }
+                Insert: {
+                    user_id: string
+                    type: 'independence' | 'retirement' | 'investment' | 'tax_planning' | 'objective' | 'mei_projection'
+                    name: string
+                    inputs: Json
+                    results: Json
+                }
+                Update: {
+                    name?: string
+                    inputs?: Json
+                    results?: Json
+                    is_favorite?: boolean
+                    notes?: string | null
+                }
+            }
+        }
+        Views: Record<string, never>
+        Functions: Record<string, never>
+        Enums: Record<string, never>
+    }
+}
+
+// Convenience type aliases
+export type Profile = Database['public']['Tables']['profiles']['Row']
+export type Bill = Database['public']['Tables']['bills']['Row']
+export type Boleto = Database['public']['Tables']['boletos']['Row']
+export type Notification = Database['public']['Tables']['notifications']['Row']
+export type WealthLabSimulation = Database['public']['Tables']['wealth_lab_simulations']['Row']
+
+/* ── Category ── */
+export interface Category {
+    id: string
+    user_id: string | null
+    name: string
+    icon: string | null
+    color?: string
+    type: 'income' | 'expense' | 'transfer' | null
+}
+
+/* ── Account ── */
+export type Account = Database['public']['Tables']['accounts']['Row']
+
+/* ── Transaction ── */
+export type Transaction = Database['public']['Tables']['transactions']['Row']
+
+export type TransactionWithCategory = Transaction & {
+    category: Category | null
+    account: Pick<Account, 'id' | 'name' | 'type' | 'color'> | null
+}
+
+export interface Investment {
+    id: string
+    user_id: string
+    ticker: string
+    name: string | null
+    type: string
+    invested_amount: number
+    current_value: number
+    monthly_return: number | null
+    quantity: number | null
+    average_price: number | null
+    notes: string | null
+    is_active: boolean
+    created_at: string
+    updated_at: string
+}
+
+/* ── Advanced Investment System ── */
+
+export interface InvestmentAccount {
+    id: string;
+    user_id: string;
+    institution: string; // 'XP', 'BTG', 'NU_INVEST', 'INTER', etc.
+    account_type: 'brokerage' | 'retirement' | 'real_estate' | 'crypto';
+    account_number: string;
+    balance: number;
+    currency: string;
+    last_sync: string;
+    created_at?: string;
+}
+
+export interface MarketQuote {
+    symbol: string;
+    price: number;
+    change: number;
+    changePercent: number;
+    name: string;
+    updatedAt: string;
+}
+
+export interface InvestmentPosition {
+    id: string;
+    account_id: string;
+    asset_type: 'stock' | 'bond' | 'fund' | 'real_estate' | 'crypto' | 'treasury';
+    symbol: string;
+    name: string;
+    quantity: number;
+    average_price: number;
+    current_price: number;
+    market_value: number;
+    currency: string;
+    sector?: string;
+    risk_level?: 'low' | 'medium' | 'high';
+    updated_at?: string;
+}
+
+export interface InvestmentStrategy {
+    id: string;
+    user_id: string;
+    name: string;
+    description: string;
+    risk_profile: 'conservative' | 'moderate' | 'aggressive' | 'dynamic';
+    allocation: InvestmentAllocation[];
+    target_return: number;
+    time_horizon: number; // em meses
+    rebalance_frequency: 'monthly' | 'quarterly' | 'semi_annual' | 'annual';
+    is_active?: boolean;
+}
+
+export interface InvestmentAllocation {
+    asset_class: string;
+    percentage: number;
+    min_percentage: number;
+    max_percentage: number;
+    recommended_assets: string[];
+}
+
+export interface InvestmentTransaction {
+    id: string;
+    user_id: string;
+    asset_symbol: string;
+    transaction_type: 'buy' | 'sell' | 'dividend' | 'split' | 'transfer';
+    quantity: number;
+    price: number;
+    total_amount: number;
+    fees: number;
+    date: string;
+    status: 'pending' | 'completed' | 'failed' | 'cancelled';
+    institution: string;
+}
+
+export interface InvestmentOrder {
+    symbol: string;
+    quantity: number;
+    orderType: 'market' | 'limit';
+    limitPrice?: number;
+    side: 'buy' | 'sell';
+}
+
+export interface InvestmentRecommendation {
+    symbol: string;
+    name: string;
+    asset_type: string;
+    allocation_percentage: number;
+    expected_return: number;
+    risk_level: string;
+    rationale: string;
+    time_horizon: string;
+}
+
+/* ── Budgets ── */
+export interface Budget {
+    id: string
+    user_id: string
+    category_id: string
+    month: string
+    planned_amount: number
+    created_at: string
+    updated_at: string
+    category?: Category
+}
+
+/* ── Goals ── */
+export interface Goal {
+    id: string
+    user_id: string
+    name: string
+    icon: string
+    target_amount: number
+    current_amount: number
+    deadline: string | null
+    color: string
+    status: 'active' | 'completed' | 'cancelled'
+    created_at: string
+    updated_at: string
+}
+
+/* ── Assets ── */
+export interface Asset {
+    id: string
+    user_id: string
+    name: string
+    type: 'property' | 'vehicle' | 'investment' | 'crypto' | 'stock' | 'fixed_income' | 'other'
+    estimated_value: number
+    acquisition_date: string | null
+    notes: string | null
+    created_at: string
+    updated_at: string
+}
+
+/* ── Liabilities ── */
+export interface Liability {
+    id: string
+    user_id: string
+    name: string
+    type: 'mortgage' | 'car_loan' | 'credit_card' | 'personal_loan' | 'student_loan' | 'other'
+    total_amount: number
+    remaining_amount: number
+    monthly_payment: number | null
+    interest_rate: number | null
+    due_date: string | null
+    notes: string | null
+    created_at: string
+    updated_at: string
+}
+
+/* ── Retirement Plan ── */
+export interface RetirementPlan {
+    id: string
+    user_id: string
+    current_age: number
+    target_retirement_age: number
+    monthly_income: number
+    monthly_expenses: number
+    current_investments: number
+    monthly_contribution: number
+    expected_return_rate: number
+    inflation_rate: number
+    desired_monthly_income: number | null
+    created_at: string
+    updated_at: string
+}
+
+/* ── Monthly Snapshot ── */
+export interface MonthlySnapshot {
+    id: string
+    user_id: string
+    month: string
+    total_income: number
+    total_expenses: number
+    total_assets: number
+    total_liabilities: number
+    net_worth: number
+    created_at: string
+}

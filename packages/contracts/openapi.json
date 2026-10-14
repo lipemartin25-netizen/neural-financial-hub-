@@ -2,17 +2,1219 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Neurafin Hub API",
-    "version": "1.0.0",
-    "description": "API compartilhada para gestão de documentos, OCR e finanças do Neurafin Hub."
+    "description": "API compartilhada para gestão de documentos, OCR e finanças do Neurafin Hub.",
+    "version": "1.0.0"
   },
   "paths": {
+    "/api/v1/auth/token": {
+      "post": {
+        "tags": [
+          "Autenticação"
+        ],
+        "summary": "Generate Token",
+        "description": "Gera token JWT assinado para autenticação nas APIs do Neurafin Hub.\nPermite autenticação com usuários pré-definidos de teste ou novos usuários.",
+        "operationId": "generate_token_api_v1_auth_token_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TokenRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/documents/sectors": {
+      "get": {
+        "tags": [
+          "Documentos"
+        ],
+        "summary": "List Sectors",
+        "operationId": "list_sectors_api_v1_documents_sectors_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SectorResponse"
+                  },
+                  "type": "array",
+                  "title": "Response List Sectors Api V1 Documents Sectors Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Documentos"
+        ],
+        "summary": "Create Sector",
+        "operationId": "create_sector_api_v1_documents_sectors_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SectorCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SectorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/documents": {
+      "get": {
+        "tags": [
+          "Documentos"
+        ],
+        "summary": "List Documents",
+        "operationId": "list_documents_api_v1_documents_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "sector_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sector Id"
+            }
+          },
+          {
+            "name": "doc_status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/DocumentStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Doc Status"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DocumentResponse"
+                  },
+                  "title": "Response List Documents Api V1 Documents Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/documents/upload": {
+      "post": {
+        "tags": [
+          "Documentos"
+        ],
+        "summary": "Upload Document",
+        "description": "Ingestão assíncrona robusta:\n1. Valida tamanho do arquivo.\n2. Persiste cópia binária no cofre privado.\n3. Registra documento em estado 'pending_processing'.\n4. Enfileira job assíncrono para o worker.",
+        "operationId": "upload_document_api_v1_documents_upload_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_document_api_v1_documents_upload_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/documents/{document_id}/download": {
+      "get": {
+        "tags": [
+          "Documentos"
+        ],
+        "summary": "Download Document",
+        "operationId": "download_document_api_v1_documents__document_id__download_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "document_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Document Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/documents/{document_id}/sector": {
+      "patch": {
+        "tags": [
+          "Documentos"
+        ],
+        "summary": "Update Document Sector",
+        "operationId": "update_document_sector_api_v1_documents__document_id__sector_patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "document_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Document Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DocumentUpdateSector"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/documents/process-jobs": {
+      "post": {
+        "tags": [
+          "Documentos"
+        ],
+        "summary": "Trigger Process Jobs",
+        "description": "Executa o ciclo do worker assíncrono para os jobs pendentes,\natualizando honestamente o status, score de confiança e setor sugerido de cada documento.",
+        "operationId": "trigger_process_jobs_api_v1_documents_process_jobs_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/finance/accounts": {
+      "get": {
+        "tags": [
+          "Finanças Manuais & Relatórios"
+        ],
+        "summary": "List Accounts",
+        "operationId": "list_accounts_api_v1_finance_accounts_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ManualAccountResponse"
+                  },
+                  "type": "array",
+                  "title": "Response List Accounts Api V1 Finance Accounts Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Finanças Manuais & Relatórios"
+        ],
+        "summary": "Create Account",
+        "operationId": "create_account_api_v1_finance_accounts_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ManualAccountCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManualAccountResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/finance/accounts/{account_id}": {
+      "delete": {
+        "tags": [
+          "Finanças Manuais & Relatórios"
+        ],
+        "summary": "Delete Account",
+        "operationId": "delete_account_api_v1_finance_accounts__account_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Account Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/finance/categories": {
+      "get": {
+        "tags": [
+          "Finanças Manuais & Relatórios"
+        ],
+        "summary": "List Categories",
+        "operationId": "list_categories_api_v1_finance_categories_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CategoryResponse"
+                  },
+                  "type": "array",
+                  "title": "Response List Categories Api V1 Finance Categories Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Finanças Manuais & Relatórios"
+        ],
+        "summary": "Create Category",
+        "operationId": "create_category_api_v1_finance_categories_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CategoryCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategoryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/finance/budgets": {
+      "get": {
+        "tags": [
+          "Finanças Manuais & Relatórios"
+        ],
+        "summary": "List Budgets",
+        "operationId": "list_budgets_api_v1_finance_budgets_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "month",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^\\d{4}-\\d{2}$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Month"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BudgetResponse"
+                  },
+                  "title": "Response List Budgets Api V1 Finance Budgets Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Finanças Manuais & Relatórios"
+        ],
+        "summary": "Create Or Update Budget",
+        "operationId": "create_or_update_budget_api_v1_finance_budgets_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BudgetCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BudgetResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/finance/transactions": {
+      "get": {
+        "tags": [
+          "Finanças Manuais & Relatórios"
+        ],
+        "summary": "List Transactions",
+        "operationId": "list_transactions_api_v1_finance_transactions_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Account Id"
+            }
+          },
+          {
+            "name": "category_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Category Id"
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/TransactionType"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Type"
+            }
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Start Date"
+            }
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "End Date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TransactionResponse"
+                  },
+                  "title": "Response List Transactions Api V1 Finance Transactions Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Finanças Manuais & Relatórios"
+        ],
+        "summary": "Create Transaction",
+        "operationId": "create_transaction_api_v1_finance_transactions_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransactionCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/finance/transactions/{transaction_id}": {
+      "delete": {
+        "tags": [
+          "Finanças Manuais & Relatórios"
+        ],
+        "summary": "Delete Transaction",
+        "operationId": "delete_transaction_api_v1_finance_transactions__transaction_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "transaction_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Transaction Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/finance/suggestions/from-document/{document_id}": {
+      "post": {
+        "tags": [
+          "Finanças Manuais & Relatórios"
+        ],
+        "summary": "Generate Suggestion From Document",
+        "description": "Extrai sugestões financeiras a partir do texto de um documento do cofre privado.\nIMPORTANTE: Este método NÃO cria transações nem afeta o saldo bancário.\nCria unicamente uma sugestão pendente para revisão humana explícita.",
+        "operationId": "generate_suggestion_from_document_api_v1_finance_suggestions_from_document__document_id__post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "document_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Document Id"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionSuggestionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/finance/suggestions": {
+      "get": {
+        "tags": [
+          "Finanças Manuais & Relatórios"
+        ],
+        "summary": "List Pending Suggestions",
+        "operationId": "list_pending_suggestions_api_v1_finance_suggestions_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TransactionSuggestionResponse"
+                  },
+                  "type": "array",
+                  "title": "Response List Pending Suggestions Api V1 Finance Suggestions Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/finance/suggestions/{suggestion_id}/approve": {
+      "post": {
+        "tags": [
+          "Finanças Manuais & Relatórios"
+        ],
+        "summary": "Approve Suggestion",
+        "description": "Aprova explicitamente uma sugestão após conferência do usuário.\nApenas nesta ação a transação é criada e o saldo da conta é afetado.",
+        "operationId": "approve_suggestion_api_v1_finance_suggestions__suggestion_id__approve_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "suggestion_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Suggestion Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApproveSuggestionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/finance/suggestions/{suggestion_id}/reject": {
+      "post": {
+        "tags": [
+          "Finanças Manuais & Relatórios"
+        ],
+        "summary": "Reject Suggestion",
+        "operationId": "reject_suggestion_api_v1_finance_suggestions__suggestion_id__reject_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "suggestion_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Suggestion Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/finance/summary": {
+      "get": {
+        "tags": [
+          "Finanças Manuais & Relatórios"
+        ],
+        "summary": "Get Financial Summary",
+        "operationId": "get_financial_summary_api_v1_finance_summary_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Start Date"
+            }
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "End Date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinancialSummaryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/finance/reports/export": {
+      "get": {
+        "tags": [
+          "Finanças Manuais & Relatórios"
+        ],
+        "summary": "Export Financial Report",
+        "description": "Gera relatório financeiro oficial consolidado:\n- csv: delimitado por ponto-e-vírgula com resumo.\n- xlsx: planilha Excel com fórmulas reais SUMIF e formatação contábil.\n- pdf: documento PDF institucional estilizado com selo de governança privada.",
+        "operationId": "export_financial_report_api_v1_finance_reports_export_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "format",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(csv|xlsx|pdf)$",
+              "default": "csv",
+              "title": "Format"
+            }
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Start Date"
+            }
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "End Date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "summary": "Health Check",
-        "operationId": "getHealth",
+        "operationId": "health_check_health_get",
         "responses": {
           "200": {
-            "description": "API saudável",
+            "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
@@ -26,11 +1228,11 @@
     },
     "/api/v1/system/status": {
       "get": {
-        "summary": "Status do Sistema",
-        "operationId": "getSystemStatus",
+        "summary": "Get System Status",
+        "operationId": "get_system_status_api_v1_system_status_get",
         "responses": {
           "200": {
-            "description": "Status operacional do sistema",
+            "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
@@ -41,341 +1243,954 @@
           }
         }
       }
-    },
-    "/api/v1/auth/token": {
-      "post": {
-        "summary": "Gera token JWT",
-        "operationId": "generateToken",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/TokenRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Token gerado com sucesso",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TokenResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Parâmetros inválidos"
-          }
-        }
-      }
-    },
-    "/api/v1/documents/sectors": {
-      "get": {
-        "summary": "Lista setores do usuário autenticado",
-        "operationId": "listSectors",
-        "security": [{ "bearerAuth": [] }],
-        "responses": {
-          "200": {
-            "description": "Lista de setores",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": { "$ref": "#/components/schemas/SectorResponse" }
-                }
-              }
-            }
-          },
-          "401": { "description": "Não autenticado" }
-        }
-      },
-      "post": {
-        "summary": "Cria um novo setor",
-        "operationId": "createSector",
-        "security": [{ "bearerAuth": [] }],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": { "$ref": "#/components/schemas/SectorCreate" }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Setor criado",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/SectorResponse" }
-              }
-            }
-          },
-          "401": { "description": "Não autenticado" }
-        }
-      }
-    },
-    "/api/v1/documents": {
-      "get": {
-        "summary": "Lista documentos do usuário autenticado",
-        "operationId": "listDocuments",
-        "security": [{ "bearerAuth": [] }],
-        "parameters": [
-          {
-            "name": "sector_id",
-            "in": "query",
-            "required": false,
-            "schema": { "type": "string", "format": "uuid" }
-          },
-          {
-            "name": "doc_status",
-            "in": "query",
-            "required": false,
-            "schema": { "type": "string" }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Lista de documentos",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": { "$ref": "#/components/schemas/DocumentResponse" }
-                }
-              }
-            }
-          },
-          "401": { "description": "Não autenticado" }
-        }
-      }
-    },
-    "/api/v1/documents/upload": {
-      "post": {
-        "summary": "Upload assíncrono de documento",
-        "operationId": "uploadDocument",
-        "security": [{ "bearerAuth": [] }],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "multipart/form-data": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "file": { "type": "string", "format": "binary" },
-                  "sector_id": { "type": "string", "format": "uuid" }
-                },
-                "required": ["file"]
-              }
-            }
-          }
-        },
-        "responses": {
-          "202": {
-            "description": "Documento recebido e enfileirado",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/DocumentResponse" }
-              }
-            }
-          },
-          "400": { "description": "Arquivo vazio ou inválido" },
-          "401": { "description": "Não autenticado" },
-          "413": { "description": "Arquivo excede limite de tamanho (25MB)" }
-        }
-      }
-    },
-    "/api/v1/documents/{document_id}/download": {
-      "get": {
-        "summary": "Download seguro do arquivo original",
-        "operationId": "downloadDocument",
-        "security": [{ "bearerAuth": [] }],
-        "parameters": [
-          {
-            "name": "document_id",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string", "format": "uuid" }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Arquivo binário original",
-            "content": {
-              "application/octet-stream": {
-                "schema": { "type": "string", "format": "binary" }
-              }
-            }
-          },
-          "401": { "description": "Não autenticado" },
-          "404": { "description": "Documento não encontrado ou isolamento rejeitado" }
-        }
-      }
-    },
-    "/api/v1/documents/{document_id}/sector": {
-      "patch": {
-        "summary": "Atualiza ou confirma setor de um documento",
-        "operationId": "updateDocumentSector",
-        "security": [{ "bearerAuth": [] }],
-        "parameters": [
-          {
-            "name": "document_id",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string", "format": "uuid" }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "sector_id": { "type": "string", "format": "uuid" }
-                },
-                "required": ["sector_id"]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Setor atualizado",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/DocumentResponse" }
-              }
-            }
-          },
-          "401": { "description": "Não autenticado" },
-          "404": { "description": "Documento não encontrado" }
-        }
-      }
-    },
-    "/api/v1/documents/process-jobs": {
-      "post": {
-        "summary": "Executa ciclo do worker assíncrono para os jobs pendentes",
-        "operationId": "processDocumentJobs",
-        "security": [{ "bearerAuth": [] }],
-        "responses": {
-          "200": {
-            "description": "Ciclo de processamento executado",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "status": { "type": "string" },
-                    "processed_jobs": { "type": "integer" },
-                    "message": { "type": "string" }
-                  }
-                }
-              }
-            }
-          },
-          "401": { "description": "Não autenticado" }
-        }
-      }
     }
   },
   "components": {
-    "securitySchemes": {
-      "bearerAuth": {
-        "type": "http",
-        "scheme": "bearer",
-        "bearerFormat": "JWT"
-      }
-    },
     "schemas": {
-      "HealthResponse": {
-        "type": "object",
-        "properties": {
-          "status": { "type": "string", "example": "ok" },
-          "service": { "type": "string", "example": "neurafin-api" },
-          "version": { "type": "string", "example": "1.0.0" }
-        },
-        "required": ["status", "service", "version"]
+      "AccountType": {
+        "type": "string",
+        "enum": [
+          "checking",
+          "savings",
+          "wallet",
+          "investment",
+          "other"
+        ],
+        "title": "AccountType"
       },
-      "SystemStatusResponse": {
-        "type": "object",
+      "ApproveSuggestionRequest": {
         "properties": {
-          "online": { "type": "boolean", "example": true },
-          "phase": { "type": "string", "example": "Fase 4 - Interface Web & Gestão Documental" }
+          "account_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Account Id"
+          },
+          "category_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category Id"
+          },
+          "amount": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amount"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date"
+          }
         },
-        "required": ["online", "phase"]
+        "type": "object",
+        "required": [
+          "account_id"
+        ],
+        "title": "ApproveSuggestionRequest"
       },
-      "TokenRequest": {
-        "type": "object",
+      "Body_upload_document_api_v1_documents_upload_post": {
         "properties": {
-          "email": { "type": "string", "example": "usuario@neurafin.com" },
-          "user_id": { "type": "string", "format": "uuid" }
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "title": "File"
+          },
+          "sector_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sector Id"
+          }
         },
-        "required": ["email"]
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_upload_document_api_v1_documents_upload_post"
       },
-      "TokenResponse": {
-        "type": "object",
+      "BudgetCreate": {
         "properties": {
-          "access_token": { "type": "string" },
-          "token_type": { "type": "string", "example": "bearer" },
-          "user_id": { "type": "string", "format": "uuid" },
-          "email": { "type": "string" }
+          "category_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Category Id"
+          },
+          "month": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}$",
+            "title": "Month"
+          },
+          "limit_amount": {
+            "type": "number",
+            "exclusiveMinimum": 0.0,
+            "title": "Limit Amount"
+          }
         },
-        "required": ["access_token", "token_type", "user_id", "email"]
+        "type": "object",
+        "required": [
+          "category_id",
+          "month",
+          "limit_amount"
+        ],
+        "title": "BudgetCreate"
       },
-      "SectorCreate": {
-        "type": "object",
+      "BudgetResponse": {
         "properties": {
-          "name": { "type": "string", "example": "Investimentos" },
-          "color": { "type": "string", "example": "#c9a858" },
-          "is_default": { "type": "boolean", "default": false }
+          "category_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Category Id"
+          },
+          "month": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}$",
+            "title": "Month"
+          },
+          "limit_amount": {
+            "type": "number",
+            "exclusiveMinimum": 0.0,
+            "title": "Limit Amount"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "spent_amount": {
+            "type": "number",
+            "title": "Spent Amount",
+            "default": 0.0
+          },
+          "percentage_spent": {
+            "type": "number",
+            "title": "Percentage Spent",
+            "default": 0.0
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
         },
-        "required": ["name"]
+        "type": "object",
+        "required": [
+          "category_id",
+          "month",
+          "limit_amount",
+          "id",
+          "user_id",
+          "created_at"
+        ],
+        "title": "BudgetResponse"
       },
-      "SectorResponse": {
-        "type": "object",
+      "CategoryCreate": {
         "properties": {
-          "id": { "type": "string", "format": "uuid" },
-          "user_id": { "type": "string", "format": "uuid" },
-          "name": { "type": "string" },
-          "color": { "type": "string" },
-          "is_default": { "type": "boolean" },
-          "created_at": { "type": "string", "format": "date-time" },
-          "updated_at": { "type": "string", "format": "date-time" }
+          "name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "color": {
+            "type": "string",
+            "title": "Color",
+            "default": "#64748b"
+          },
+          "icon": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Icon"
+          }
         },
-        "required": ["id", "user_id", "name", "color", "is_default", "created_at", "updated_at"]
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "CategoryCreate"
+      },
+      "CategoryResponse": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "color": {
+            "type": "string",
+            "title": "Color",
+            "default": "#64748b"
+          },
+          "icon": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Icon"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "id",
+          "user_id",
+          "created_at"
+        ],
+        "title": "CategoryResponse"
       },
       "DocumentResponse": {
-        "type": "object",
         "properties": {
-          "id": { "type": "string", "format": "uuid" },
-          "user_id": { "type": "string", "format": "uuid" },
-          "sector_id": { "type": "string", "format": "uuid", "nullable": true },
-          "file_name": { "type": "string" },
-          "file_size": { "type": "integer" },
-          "mime_type": { "type": "string" },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "sector_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sector Id"
+          },
+          "file_name": {
+            "type": "string",
+            "title": "File Name"
+          },
+          "file_size": {
+            "type": "integer",
+            "title": "File Size"
+          },
+          "mime_type": {
+            "type": "string",
+            "title": "Mime Type"
+          },
+          "status": {
+            "$ref": "#/components/schemas/DocumentStatus"
+          },
+          "suggested_sector_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Suggested Sector Id"
+          },
+          "confidence_score": {
+            "type": "number",
+            "title": "Confidence Score",
+            "default": 0.0
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version",
+            "default": 1
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "user_id",
+          "file_name",
+          "file_size",
+          "mime_type",
+          "status",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "DocumentResponse"
+      },
+      "DocumentStatus": {
+        "type": "string",
+        "enum": [
+          "received",
+          "pending_processing",
+          "processing",
+          "ready",
+          "review_required",
+          "read_unavailable",
+          "error",
+          "pending_sync"
+        ],
+        "title": "DocumentStatus"
+      },
+      "DocumentUpdateSector": {
+        "properties": {
+          "sector_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Sector Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sector_id"
+        ],
+        "title": "DocumentUpdateSector"
+      },
+      "FinancialSummaryResponse": {
+        "properties": {
+          "total_income": {
+            "type": "number",
+            "title": "Total Income"
+          },
+          "total_expense": {
+            "type": "number",
+            "title": "Total Expense"
+          },
+          "net_balance": {
+            "type": "number",
+            "title": "Net Balance"
+          },
+          "transaction_count": {
+            "type": "integer",
+            "title": "Transaction Count"
+          },
+          "by_category": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "By Category"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_income",
+          "total_expense",
+          "net_balance",
+          "transaction_count",
+          "by_category"
+        ],
+        "title": "FinancialSummaryResponse"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HealthResponse": {
+        "properties": {
           "status": {
             "type": "string",
-            "enum": [
-              "received",
-              "pending_processing",
-              "processing",
-              "ready",
-              "review_required",
-              "read_unavailable",
-              "error"
-            ]
+            "title": "Status"
           },
-          "suggested_sector_id": { "type": "string", "format": "uuid", "nullable": true },
-          "confidence_score": { "type": "number", "minimum": 0, "maximum": 1 },
-          "version": { "type": "integer" },
-          "created_at": { "type": "string", "format": "date-time" },
-          "updated_at": { "type": "string", "format": "date-time" }
+          "service": {
+            "type": "string",
+            "title": "Service"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version"
+          }
         },
-        "required": ["id", "user_id", "file_name", "file_size", "mime_type", "status", "version", "created_at", "updated_at"]
+        "type": "object",
+        "required": [
+          "status",
+          "service",
+          "version"
+        ],
+        "title": "HealthResponse"
+      },
+      "ManualAccountCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "type": {
+            "$ref": "#/components/schemas/AccountType",
+            "default": "checking"
+          },
+          "balance": {
+            "type": "number",
+            "title": "Balance",
+            "default": 0.0
+          },
+          "color": {
+            "type": "string",
+            "title": "Color",
+            "default": "#10b981"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "ManualAccountCreate"
+      },
+      "ManualAccountResponse": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "type": {
+            "$ref": "#/components/schemas/AccountType",
+            "default": "checking"
+          },
+          "balance": {
+            "type": "number",
+            "title": "Balance",
+            "default": 0.0
+          },
+          "color": {
+            "type": "string",
+            "title": "Color",
+            "default": "#10b981"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "id",
+          "user_id",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "ManualAccountResponse"
+      },
+      "SectorCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "color": {
+            "type": "string",
+            "title": "Color",
+            "default": "#10b981"
+          },
+          "is_default": {
+            "type": "boolean",
+            "title": "Is Default",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "SectorCreate"
+      },
+      "SectorResponse": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "color": {
+            "type": "string",
+            "title": "Color",
+            "default": "#10b981"
+          },
+          "is_default": {
+            "type": "boolean",
+            "title": "Is Default",
+            "default": false
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "id",
+          "user_id",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "SectorResponse"
+      },
+      "SuggestionStatus": {
+        "type": "string",
+        "enum": [
+          "pending_review",
+          "approved",
+          "rejected"
+        ],
+        "title": "SuggestionStatus"
+      },
+      "SystemStatusResponse": {
+        "properties": {
+          "online": {
+            "type": "boolean",
+            "title": "Online"
+          },
+          "phase": {
+            "type": "string",
+            "title": "Phase"
+          }
+        },
+        "type": "object",
+        "required": [
+          "online",
+          "phase"
+        ],
+        "title": "SystemStatusResponse"
+      },
+      "TokenRequest": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "user_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email"
+        ],
+        "title": "TokenRequest"
+      },
+      "TokenResponse": {
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "title": "Access Token"
+          },
+          "token_type": {
+            "type": "string",
+            "title": "Token Type",
+            "default": "bearer"
+          },
+          "user_id": {
+            "type": "string",
+            "title": "User Id"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          }
+        },
+        "type": "object",
+        "required": [
+          "access_token",
+          "user_id",
+          "email"
+        ],
+        "title": "TokenResponse"
+      },
+      "TransactionCreate": {
+        "properties": {
+          "account_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Account Id"
+          },
+          "category_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category Id"
+          },
+          "document_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Id"
+          },
+          "type": {
+            "$ref": "#/components/schemas/TransactionType"
+          },
+          "amount": {
+            "type": "number",
+            "exclusiveMinimum": 0.0,
+            "title": "Amount"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Description"
+          },
+          "date": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+            "title": "Date"
+          },
+          "is_confirmed_by_user": {
+            "type": "boolean",
+            "title": "Is Confirmed By User",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "account_id",
+          "type",
+          "amount",
+          "description",
+          "date"
+        ],
+        "title": "TransactionCreate"
+      },
+      "TransactionResponse": {
+        "properties": {
+          "account_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Account Id"
+          },
+          "category_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category Id"
+          },
+          "document_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Id"
+          },
+          "type": {
+            "$ref": "#/components/schemas/TransactionType"
+          },
+          "amount": {
+            "type": "number",
+            "exclusiveMinimum": 0.0,
+            "title": "Amount"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Description"
+          },
+          "date": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+            "title": "Date"
+          },
+          "is_confirmed_by_user": {
+            "type": "boolean",
+            "title": "Is Confirmed By User",
+            "default": true
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "account_id",
+          "type",
+          "amount",
+          "description",
+          "date",
+          "id",
+          "user_id",
+          "created_at"
+        ],
+        "title": "TransactionResponse"
+      },
+      "TransactionSuggestionResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "document_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Document Id"
+          },
+          "suggested_type": {
+            "$ref": "#/components/schemas/TransactionType"
+          },
+          "suggested_amount": {
+            "type": "number",
+            "title": "Suggested Amount"
+          },
+          "suggested_description": {
+            "type": "string",
+            "title": "Suggested Description"
+          },
+          "suggested_date": {
+            "type": "string",
+            "title": "Suggested Date"
+          },
+          "suggested_category_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Suggested Category Id"
+          },
+          "confidence_score": {
+            "type": "number",
+            "title": "Confidence Score",
+            "default": 0.0
+          },
+          "status": {
+            "$ref": "#/components/schemas/SuggestionStatus",
+            "default": "pending_review"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "user_id",
+          "document_id",
+          "suggested_type",
+          "suggested_amount",
+          "suggested_description",
+          "suggested_date",
+          "created_at"
+        ],
+        "title": "TransactionSuggestionResponse"
+      },
+      "TransactionType": {
+        "type": "string",
+        "enum": [
+          "income",
+          "expense",
+          "transfer"
+        ],
+        "title": "TransactionType"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    },
+    "securitySchemes": {
+      "HTTPBearer": {
+        "type": "http",
+        "scheme": "bearer"
       }
     }
   }

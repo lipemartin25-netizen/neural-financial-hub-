@@ -23,9 +23,9 @@ test('Fila Offline - Enfileiramento e Recuperação', async () => {
     status: 'pending',
   };
 
-  storage.setItem(STORAGE_KEY, JSON.stringify([item1]));
+  global.localStorage.setItem(STORAGE_KEY, JSON.stringify([item1]));
 
-  const raw = storage.getItem(STORAGE_KEY);
+  const raw = global.localStorage.getItem(STORAGE_KEY);
   assert.ok(raw);
   const queue = JSON.parse(raw);
   assert.equal(queue.length, 1);
@@ -41,13 +41,13 @@ test('Fila Offline - Remoção e Limpeza', async () => {
     { id: '1', action: 'upload_document', status: 'pending' },
     { id: '2', action: 'upload_document', status: 'pending' },
   ];
-  storage.setItem(STORAGE_KEY, JSON.stringify(items));
+  global.localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
 
   // Simula markSynced removendo id 1
   const updated = items.filter((i) => i.id !== '1');
-  storage.setItem(STORAGE_KEY, JSON.stringify(updated));
+  global.localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
 
-  const remaining = JSON.parse(storage.getItem(STORAGE_KEY));
+  const remaining = JSON.parse(global.localStorage.getItem(STORAGE_KEY));
   assert.equal(remaining.length, 1);
   assert.equal(remaining[0].id, '2');
 });

@@ -204,6 +204,7 @@ def trigger_process_jobs(
         if target_doc and result:
             target_doc["status"] = result.get("document_status", DocumentStatus.REVIEW_REQUIRED)
             target_doc["confidence_score"] = result.get("confidence_score", 0.0)
+            target_doc["raw_text"] = result.get("extracted_text", "")
             
             suggested_name = result.get("suggested_sector")
             if suggested_name:

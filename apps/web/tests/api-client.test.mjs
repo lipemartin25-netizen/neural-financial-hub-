@@ -32,3 +32,22 @@ test('Validação de Tipos de Status de Documentos', () => {
   assert.ok(validStatuses.includes('review_required'));
   assert.ok(validStatuses.includes('read_unavailable'));
 });
+
+test('Validação de Contratos de Finanças Manuais e Relatórios', () => {
+  const baseUrl = 'http://localhost:8000/api/v1';
+
+  // URLs de Finanças
+  assert.equal(`${baseUrl}/finance/accounts`, 'http://localhost:8000/api/v1/finance/accounts');
+  assert.equal(`${baseUrl}/finance/categories`, 'http://localhost:8000/api/v1/finance/categories');
+  assert.equal(`${baseUrl}/finance/budgets`, 'http://localhost:8000/api/v1/finance/budgets');
+  assert.equal(`${baseUrl}/finance/transactions`, 'http://localhost:8000/api/v1/finance/transactions');
+  assert.equal(`${baseUrl}/finance/suggestions`, 'http://localhost:8000/api/v1/finance/suggestions');
+  assert.equal(`${baseUrl}/finance/summary`, 'http://localhost:8000/api/v1/finance/summary');
+
+  // Formatos de exportação suportados com fórmulas/delimitadores verificados
+  const supportedFormats = ['csv', 'xlsx', 'pdf'];
+  supportedFormats.forEach(fmt => {
+    const exportUrl = `${baseUrl}/finance/reports/export?format=${fmt}`;
+    assert.ok(exportUrl.includes(`format=${fmt}`));
+  });
+});

@@ -1,0 +1,339 @@
+/* ================================================================
+   FORCE STYLES — Nuclear override para garantir visual Neural Finance Hub
+   Este arquivo usa !important para sobrescrever qualquer conflito
+   ================================================================ */
+
+html,
+body {
+    background-color: #0b0d10 !important;
+    color: #ebe6da !important;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
+    -webkit-font-smoothing: antialiased !important;
+}
+
+/* Remove qualquer background branco residual */
+*,
+*::before,
+*::after {
+    border-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+main,
+section,
+div,
+header,
+footer,
+nav,
+aside {
+    color: inherit;
+}
+
+/* ===== BACKGROUND OVERRIDES ===== */
+.bg-background,
+[data-bg="background"] {
+    background-color: #0b0d10 !important;
+}
+
+.bg-card,
+[data-bg="card"] {
+    background-color: #12151a !important;
+}
+
+.bg-secondary {
+    background-color: #181c22 !important;
+}
+
+.bg-muted {
+    background-color: #1e2228 !important;
+}
+
+/* ===== TEXT COLORS ===== */
+.text-foreground {
+    color: #ebe6da !important;
+}
+
+.text-muted-foreground {
+    color: #6b7280 !important;
+}
+
+.text-gold,
+.text-primary {
+    color: #c9a858 !important;
+}
+
+/* ===== GOLD GRADIENT TEXT ===== */
+.text-gradient-gold {
+    background: linear-gradient(135deg, #dfc07a, #b8943d, #d4b05e) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    background-clip: text !important;
+}
+
+/* ===== GOLD BACKGROUND ===== */
+.bg-gradient-gold {
+    background: linear-gradient(135deg, #c9a858, #9a7d3a) !important;
+}
+
+/* ===== GRID PATTERN ===== */
+.bg-grid-gold {
+    background-image:
+        linear-gradient(rgba(201, 168, 88, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(201, 168, 88, 0.03) 1px, transparent 1px) !important;
+    background-size: 50px 50px !important;
+}
+
+/* ===== DIVIDER ===== */
+.divider-gold {
+    background: linear-gradient(90deg, transparent, rgba(201, 168, 88, 0.3), transparent) !important;
+    height: 1px !important;
+}
+
+/* ===== 3D CARD ===== */
+.card-3d {
+    position: relative !important;
+    border: 1px solid rgba(201, 168, 88, 0.06) !important;
+    background: linear-gradient(165deg, #13161c, #0d0f14) !important;
+    border-radius: 1rem !important;
+    box-shadow:
+        0 1px 0 0 rgba(201, 168, 88, 0.04),
+        inset 0 1px 0 0 rgba(201, 168, 88, 0.03),
+        0 8px 30px -10px rgba(0, 0, 0, 0.5) !important;
+    transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1) !important;
+    overflow: hidden !important;
+}
+
+.card-3d:hover {
+    border-color: rgba(201, 168, 88, 0.15) !important;
+    transform: translateY(-4px) !important;
+    box-shadow:
+        0 1px 0 0 rgba(201, 168, 88, 0.08),
+        inset 0 1px 0 0 rgba(201, 168, 88, 0.05),
+        0 20px 50px -15px rgba(0, 0, 0, 0.6),
+        0 0 40px -10px rgba(201, 168, 88, 0.08) !important;
+}
+
+/* ===== 3D CARD HIGHLIGHT ===== */
+.card-3d-highlight {
+    position: relative !important;
+    border: 1px solid rgba(201, 168, 88, 0.18) !important;
+    background: linear-gradient(165deg, #171a20, #0f1115) !important;
+    border-radius: 1rem !important;
+    box-shadow:
+        0 1px 0 0 rgba(201, 168, 88, 0.1),
+        inset 0 1px 0 0 rgba(201, 168, 88, 0.06),
+        0 12px 40px -10px rgba(0, 0, 0, 0.6),
+        0 0 50px -15px rgba(201, 168, 88, 0.1) !important;
+    transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1) !important;
+    overflow: hidden !important;
+}
+
+.card-3d-highlight:hover {
+    border-color: rgba(201, 168, 88, 0.3) !important;
+    transform: translateY(-6px) !important;
+    box-shadow:
+        0 1px 0 0 rgba(201, 168, 88, 0.12),
+        inset 0 1px 0 0 rgba(201, 168, 88, 0.08),
+        0 25px 60px -15px rgba(0, 0, 0, 0.7),
+        0 0 60px -15px rgba(201, 168, 88, 0.15) !important;
+}
+
+/* ===== BUTTONS ===== */
+.btn-gold {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.5rem !important;
+    background: linear-gradient(135deg, #c9a858, #9a7d3a) !important;
+    color: #0b0d10 !important;
+    font-weight: 600 !important;
+    border: none !important;
+    border-radius: 0.625rem !important;
+    padding: 0.625rem 1.5rem !important;
+    cursor: pointer !important;
+    transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1) !important;
+    box-shadow: 0 2px 10px -3px rgba(201, 168, 88, 0.3) !important;
+    text-decoration: none !important;
+    font-size: inherit !important;
+}
+
+.btn-gold:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 20px -5px rgba(201, 168, 88, 0.4) !important;
+    filter: brightness(1.1) !important;
+}
+
+.btn-gold-outline {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.5rem !important;
+    background: transparent !important;
+    color: #c9a858 !important;
+    font-weight: 600 !important;
+    border: 1px solid rgba(201, 168, 88, 0.3) !important;
+    border-radius: 0.625rem !important;
+    padding: 0.625rem 1.5rem !important;
+    cursor: pointer !important;
+    transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1) !important;
+    text-decoration: none !important;
+    font-size: inherit !important;
+}
+
+.btn-gold-outline:hover {
+    background: rgba(201, 168, 88, 0.08) !important;
+    border-color: rgba(201, 168, 88, 0.5) !important;
+    transform: translateY(-1px) !important;
+}
+
+/* ===== SIDEBAR ===== */
+.sidebar-item-active {
+    background: linear-gradient(90deg, rgba(201, 168, 88, 0.12), transparent) !important;
+    border-left: 2px solid #c9a858 !important;
+    color: #c9a858 !important;
+}
+
+/* ===== NAVBAR FIXED ===== */
+nav[class*="fixed"] {
+    background-color: rgba(11, 13, 16, 0.8) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+}
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar {
+    width: 5px !important;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent !important;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #1e2228 !important;
+    border-radius: 10px !important;
+}
+
+/* ===== SELECTION ===== */
+::selection {
+    background: rgba(201, 168, 88, 0.25) !important;
+    color: #f5f0e5 !important;
+}
+
+/* ===== INPUT FIELDS ===== */
+input,
+textarea,
+select {
+    background-color: #12151a !important;
+    color: #ebe6da !important;
+    border-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+    border-color: rgba(201, 168, 88, 0.4) !important;
+    outline: none !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: #4b5563 !important;
+}
+
+/* ===== LINKS ===== */
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+/* ===== UTILITY: EMERALD & RED FOR DATA ===== */
+.text-emerald-400 {
+    color: #34d399 !important;
+}
+
+.text-red-400 {
+    color: #f87171 !important;
+}
+
+.text-yellow-400 {
+    color: #fbbf24 !important;
+}
+
+.text-blue-400 {
+    color: #60a5fa !important;
+}
+
+.bg-emerald-400\/10 {
+    background-color: rgba(52, 211, 153, 0.1) !important;
+}
+
+.bg-red-400\/10 {
+    background-color: rgba(248, 113, 113, 0.1) !important;
+}
+
+.bg-yellow-400\/10 {
+    background-color: rgba(251, 191, 36, 0.1) !important;
+}
+
+/* ===== ANIMATION ===== */
+@keyframes gold-pulse {
+
+    0%,
+    100% {
+        box-shadow: 0 0 15px -5px rgba(201, 168, 88, 0.2);
+    }
+
+    50% {
+        box-shadow: 0 0 25px -5px rgba(201, 168, 88, 0.35);
+    }
+}
+
+.glow-gold-pulse {
+    animation: gold-pulse 3s ease-in-out infinite !important;
+}
+
+/* ===== LIGHT MODE — Force overrides ===== */
+html.light,
+html.light body {
+    background-color: #f5f3ee !important;
+    color: #1a1a1a !important;
+}
+
+html.light .card-3d {
+    background: linear-gradient(165deg, #ffffff, #faf8f4) !important;
+    border-color: rgba(154, 125, 58, 0.1) !important;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06) !important;
+}
+
+html.light .card-3d:hover {
+    border-color: rgba(154, 125, 58, 0.25) !important;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1) !important;
+}
+
+html.light .card-3d-highlight {
+    background: linear-gradient(165deg, #fffdf8, #f8f5ee) !important;
+    border-color: rgba(154, 125, 58, 0.2) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 0 40px -15px rgba(154, 125, 58, 0.1) !important;
+}
+
+html.light .bg-gradient-gold {
+    background: linear-gradient(135deg, #9a7d3a, #7a6230) !important;
+}
+
+html.light .btn-gold {
+    background: linear-gradient(135deg, #9a7d3a, #7a6230) !important;
+    color: #ffffff !important;
+}
+
+html.light .btn-gold-outline {
+    color: #9a7d3a !important;
+    border-color: rgba(154, 125, 58, 0.3) !important;
+}
+
+html.light .btn-gold-outline:hover {
+    background: rgba(154, 125, 58, 0.08) !important;
+}
+
+html.light nav[class*="fixed"] {
+    background-color: rgba(245, 243, 238, 0.9) !important;
+}
