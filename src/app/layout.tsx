@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import './force-styles.css'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
+import { Toaster } from 'sonner'
 
 const inter = Inter({
     subsets: ['latin'],
@@ -72,6 +73,7 @@ export default function RootLayout({
                 <ErrorBoundary>
                     {children}
                 </ErrorBoundary>
+                <Toaster position="top-right" richColors theme="dark" />
             </body>
         </html>
     )

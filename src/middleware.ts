@@ -141,6 +141,8 @@ export async function middleware(request: NextRequest) {
     )
 
     const { data: { user } } = await supabase.auth.getUser()
+    const isDemo = request.cookies.get('neurafin_demo_mode')?.value === 'true'
+    const isAuthenticated = !!user || isDemo
 
     // Rotas públicas
     const publicRoutes = ['/', '/login', '/register', '/reset-password', '/offline', '/privacy', '/terms']
@@ -150,7 +152,7 @@ export async function middleware(request: NextRequest) {
     const isApiRoute = pathname.startsWith('/api/')
 
     // Não autenticado tentando acessar rota protegida
-    if (!user && !isPublicRoute && !isApiRoute) {
+    if (!isAuthenticated && !isPublicRoute && !isApiRoute) {
         const url = request.nextUrl.clone()
         url.pathname = '/login'
         url.searchParams.set('redirectTo', pathname)
@@ -158,7 +160,7 @@ export async function middleware(request: NextRequest) {
     }
 
     // Autenticado tentando acessar login/register → dashboard
-    if (user && (pathname === '/login' || pathname === '/register')) {
+    if (isAuthenticated && (pathname === '/login' || pathname === '/register')) {
         const url = request.nextUrl.clone()
         url.pathname = '/dashboard'
         return applySecurityHeaders(NextResponse.redirect(url))

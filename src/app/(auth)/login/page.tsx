@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { Loader2, Mail, Lock, Eye, EyeOff, ArrowRight, Github, Chrome } from 'lucide-react'
+import { Loader2, Mail, Lock, Eye, EyeOff, ArrowRight, Github, Chrome, Sparkles, AlertCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 const C = {
@@ -29,23 +29,42 @@ export default function LoginPage() {
     const [loading, setLoading] = useState(false)
     const [mode, setMode] = useState<'login' | 'forgot'>('login')
     const [resetSent, setResetSent] = useState(false)
+    const [errorMsg, setErrorMsg] = useState('')
     const supabase = createClient()
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (!email || !password) { toast.error('Preencha todos os campos'); return }
+        setErrorMsg('')
+        if (!email || !password) {
+            setErrorMsg('Por favor, preencha o e-mail e a senha.')
+            toast.error('Preencha todos os campos')
+            return
+        }
         setLoading(true)
         const { error } = await supabase.auth.signInWithPassword({ email, password })
         setLoading(false)
         if (error) {
-            if (error.message.includes('Invalid login')) toast.error('Email ou senha incorretos')
-            else if (error.message.includes('Email not confirmed')) toast.error('Confirme seu email antes de entrar')
-            else toast.error(error.message)
+            let msg = 'Erro ao realizar login.'
+            if (error.message.includes('Invalid login') || error.message.includes('invalid_credentials')) {
+                msg = 'Email ou senha incorretos. Ainda não tem conta? Clique em "Criar conta grátis" abaixo ou use o Modo Demonstração.'
+            } else if (error.message.includes('Email not confirmed')) {
+                msg = 'Confirme seu email antes de entrar.'
+            } else {
+                msg = error.message
+            }
+            setErrorMsg(msg)
+            toast.error(msg)
         } else {
             toast.success('Bem-vindo!')
-            router.push('/dashboard')
-            router.refresh()
+            window.location.href = '/dashboard'
         }
+    }
+
+    const handleDemoLogin = () => {
+        setLoading(true)
+        document.cookie = 'neurafin_demo_mode=true; path=/; max-age=86400'
+        toast.success('Acesso Demonstração Ativado!')
+        window.location.href = '/dashboard'
     }
     const handleForgotPassword = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -129,7 +148,7 @@ export default function LoginPage() {
                 {mode === 'login' ? (
                     <div>
                         <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 12, marginBottom: 24 }}>
-                            <button type="button" onClick={handleGoogleSignIn} disabled={loading}
+                            <button type="button" onClick={() => handleOAuth('google')} disabled={loading}
                                 style={{ ...inputStyle, padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, cursor: 'pointer', height: 40, border: `1px solid rgba(201,168,88,0.3)` }}>
                                 <Chrome size={16} color="#c9a858" /> <span style={{ fontSize: 13, fontWeight: 500, color: '#c9a858' }}>Google</span>
                             </button>
@@ -149,10 +168,30 @@ export default function LoginPage() {
                                 </span>
                             </div>
                         </div>
+
+                        {errorMsg && (
+                            <div style={{
+                                backgroundColor: 'rgba(248, 113, 113, 0.1)',
+                                border: '1px solid rgba(248, 113, 113, 0.3)',
+                                borderRadius: 10,
+                                padding: '12px 14px',
+                                marginBottom: 18,
+                                display: 'flex',
+                                alignItems: 'flex-start',
+                                gap: 10,
+                                color: '#fca5a5',
+                                fontSize: 13,
+                                lineHeight: 1.4,
+                            }}>
+                                <AlertCircle size={18} style={{ flexShrink: 0, marginTop: 2, color: '#f87171' }} />
+                                <div>{errorMsg}</div>
+                            </div>
+                        )}
+
                         <form onSubmit={handleLogin}>
                             <div style={{ marginBottom: 16, position: 'relative' }}>
                                 <Mail size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: C.textMuted, zIndex: 1 }} />
-                                <input type="email" value={email} onChange={e => setEmail(e.target.value)}
+                                <input type="email" value={email} onChange={e => { setEmail(e.target.value); setErrorMsg('') }}
                                     placeholder="seu@email.com" style={inputStyle} autoComplete="email"
                                     onFocus={e => e.target.style.borderColor = 'rgba(201,168,88,0.3)'}
                                     onBlur={e => e.target.style.borderColor = C.border} />
@@ -160,7 +199,7 @@ export default function LoginPage() {
                             <div style={{ marginBottom: 8, position: 'relative' }}>
                                 <Lock size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: C.textMuted, zIndex: 1 }} />
                                 <input type={showPassword ? 'text' : 'password'} value={password}
-                                    onChange={e => setPassword(e.target.value)}
+                                    onChange={e => { setPassword(e.target.value); setErrorMsg('') }}
                                     placeholder="Sua senha" style={{ ...inputStyle, paddingRight: 42 }} autoComplete="current-password"
                                     onFocus={e => e.target.style.borderColor = 'rgba(201,168,88,0.3)'}
                                     onBlur={e => e.target.style.borderColor = C.border} />
@@ -169,8 +208,8 @@ export default function LoginPage() {
                                     {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                                 </button>
                             </div>
-                            <div style={{ textAlign: 'right', marginBottom: 24 }}>
-                                <button type="button" onClick={() => setMode('forgot')}
+                            <div style={{ textAlign: 'right', marginBottom: 20 }}>
+                                <button type="button" onClick={() => { setMode('forgot'); setErrorMsg('') }}
                                     style={{ background: 'none', border: 'none', color: C.gold, fontSize: 12, cursor: 'pointer' }}>
                                     Esqueci minha senha
                                 </button>
@@ -178,6 +217,29 @@ export default function LoginPage() {
                             <button type="submit" disabled={loading} style={btnStyle}>
                                 {loading ? <Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} /> : <>Entrar <ArrowRight size={16} /></>}
                             </button>
+
+                            <div style={{ marginTop: 14, textAlign: 'center' }}>
+                                <button type="button" onClick={handleDemoLogin} disabled={loading}
+                                    style={{
+                                        width: '100%',
+                                        padding: '12px 0',
+                                        borderRadius: 10,
+                                        border: `1px solid rgba(201,168,88,0.3)`,
+                                        background: 'rgba(201,168,88,0.06)',
+                                        color: '#dfc07a',
+                                        fontSize: 13,
+                                        fontWeight: 600,
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: 8,
+                                        transition: 'background 0.2s, border-color 0.2s',
+                                    }}>
+                                    <Sparkles size={15} color="#dfc07a" />
+                                    Entrar no Modo Demonstração (Explorar App)
+                                </button>
+                            </div>
                         </form>
                     </div>
                 ) : (
