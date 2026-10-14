@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import './force-styles.css'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 
 const inter = Inter({
     subsets: ['latin'],
@@ -68,7 +69,9 @@ export default function RootLayout({
                     overscrollBehavior: 'none',
                 }}
             >
-                {children}
+                <ErrorBoundary>
+                    {children}
+                </ErrorBoundary>
             </body>
         </html>
     )

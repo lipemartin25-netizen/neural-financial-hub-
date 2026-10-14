@@ -1,8 +1,15 @@
 'use client'
 
 import { motion } from 'framer-motion'
+import { useState, useEffect } from 'react'
 
 export default function NeonBackground() {
+    const [mounted, setMounted] = useState(false)
+
+    useEffect(() => {
+        setMounted(true)
+    }, [])
+
     return (
         <div style={{ position: 'fixed', inset: 0, zIndex: -1, overflow: 'hidden', pointerEvents: 'none', backgroundColor: '#010101' }}>
             {/* 🌊 Golden Silk Waves (Main Body) */}
@@ -58,8 +65,8 @@ export default function NeonBackground() {
                 }}
             />
 
-            {/* 💎 Glitter Dust (Tiny intense sparkles) */}
-            {[...Array(80)].map((_, i) => {
+            {/* 💎 Glitter Dust (Tiny intense sparkles) - Client only to prevent hydration mismatch */}
+            {mounted && [...Array(80)].map((_, i) => {
                 const size = Math.random() * 3 + 1
                 return (
                     <motion.div
@@ -90,8 +97,8 @@ export default function NeonBackground() {
                 )
             })}
 
-            {/* 🪐 Soft Bokeh Orbs (Image 1 reference) */}
-            {[...Array(40)].map((_, i) => {
+            {/* 🪐 Soft Bokeh Orbs (Image 1 reference) - Client only */}
+            {mounted && [...Array(40)].map((_, i) => {
                 const size = Math.random() * 80 + 30
                 return (
                     <motion.div

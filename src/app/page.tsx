@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion'
 import NextImage from 'next/image'
+import NeonBackground from '@/components/NeonBackground'
 
 import {
     ArrowRight, Brain, Shield, BarChart3, Zap, Fingerprint, Globe,
@@ -439,10 +440,7 @@ function Footer() {
     )
 }
 
-/* ============================================================
-   NEON BACKGROUND EFFECT
-   ============================================================ */
-import NeonBackground from '@/components/NeonBackground'
+
 
 /* ============================================================
    LANDING PAGE
