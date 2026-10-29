@@ -10,6 +10,12 @@ const nextConfig = {
     typescript: {
         ignoreBuildErrors: false,
     },
+    
+    // ── Otimizações de performance e carregamento ──
+    experimental: {
+        optimizePackageImports: ['lucide-react', 'recharts', 'framer-motion', '@supabase/supabase-js'],
+    },
+    swcMinify: true,
     // ── Otimizações de produção ──
     poweredByHeader: false,
     compress: true,
