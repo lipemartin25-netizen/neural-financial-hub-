@@ -113,7 +113,7 @@ export default function ImportStatementPage() {
 
                         {/* Upload area */}
                         <input ref={fileInputRef} type="file"
-                            accept={importType === 'pdf' ? '.pdf,image/*' : '.csv,.txt,.tsv'}
+                            accept={importType === 'pdf' ? '.pdf,image/*' : '.csv,.ofx,.txt,.tsv'}
                             onChange={handleImport} style={{ display: 'none' }} />
 
                         <button onClick={() => {
@@ -135,14 +135,14 @@ export default function ImportStatementPage() {
                                 <>
                                     <Loader2 size={32} style={{ color: C.gold, animation: 'spin 1s linear infinite' }} />
                                     <p style={{ fontSize: 14, color: C.gold, fontWeight: 500 }}>
-                                        {importType === 'pdf' ? 'IA analisando arquivo...' : 'Processando CSV...'}
+                                        {importType === 'pdf' ? 'IA analisando arquivo...' : 'Processando extrato...'}
                                     </p>
                                 </>
                             ) : (
                                 <>
                                     <Upload size={32} style={{ color: C.textMuted }} />
                                     <p style={{ fontSize: 14, color: C.text, fontWeight: 500 }}>
-                                        Clique para selecionar {importType === 'pdf' ? 'PDF ou Foto' : 'CSV'}
+                                        Clique para selecionar {importType === 'pdf' ? 'PDF ou Foto' : 'OFX ou CSV'}
                                     </p>
                                     <p style={{ fontSize: 12, color: C.textMuted }}>
                                         {importType === 'pdf' ? 'Suporta extratos e fotos de qualquer banco brasileiro' : 'Separadores: vírgula, ponto-e-vírgula ou tab'}
@@ -219,7 +219,7 @@ export default function ImportStatementPage() {
                             <FileText size={40} style={{ color: 'rgba(107,114,128,0.3)', margin: '0 auto 16px' }} />
                             <p style={{ fontSize: 16, fontWeight: 500, color: C.textMuted }}>Aguardando upload</p>
                             <p style={{ fontSize: 13, color: C.textMuted2, marginTop: 8 }}>
-                                Selecione um arquivo {importType === 'pdf' ? 'PDF ou Foto' : 'CSV'} para começar
+                                Selecione um arquivo {importType === 'pdf' ? 'PDF ou Foto' : 'OFX ou CSV'} para começar
                             </p>
                         </div>
                     )}

@@ -14,10 +14,6 @@ const nextConfig = {
     poweredByHeader: false,
     compress: true,
     reactStrictMode: true,
-    env: {
-        PLUGGY_CLIENT_ID: process.env.PLUGGY_CLIENT_ID,
-        PLUGGY_CLIENT_SECRET: process.env.PLUGGY_CLIENT_SECRET,
-    },
 
     // ── Imagens otimizadas ──
     images: {
@@ -33,10 +29,6 @@ const nextConfig = {
             {
                 protocol: 'https',
                 hostname: 'avatars.githubusercontent.com',
-            },
-            {
-                protocol: 'https',
-                hostname: 'cdn.pluggy.ai',
             },
         ],
         formats: ['image/avif', 'image/webp'],

@@ -1,6 +1,9 @@
 import { GoogleGenAI } from '@google/genai'
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! })
+function getAIClient() {
+    const key = process.env.GEMINI_API_KEY || 'dummy-build-key'
+    return new GoogleGenAI({ apiKey: key })
+}
 
 export const GEMINI_MODEL = process.env.GEMINI_MODEL ?? 'gemini-3-flash-preview'
 
@@ -8,6 +11,10 @@ export const GEMINI_MODEL = process.env.GEMINI_MODEL ?? 'gemini-3-flash-preview'
  * Generate a text response from Gemini (non-streaming)
  */
 export async function generateText(prompt: string, systemInstruction?: string): Promise<string> {
+    if (!process.env.GEMINI_API_KEY) {
+        throw new Error('GEMINI_API_KEY não configurada')
+    }
+    const ai = getAIClient()
     const response = await ai.models.generateContent({
         model: GEMINI_MODEL,
         contents: prompt,
@@ -24,6 +31,10 @@ export async function* streamChat(
     messages: Array<{ role: 'user' | 'model'; text: string }>,
     systemInstruction: string
 ): AsyncGenerator<string> {
+    if (!process.env.GEMINI_API_KEY) {
+        throw new Error('GEMINI_API_KEY não configurada')
+    }
+    const ai = getAIClient()
     const contents = messages.map((m) => ({
         role: m.role,
         parts: [{ text: m.text }],
@@ -48,6 +59,14 @@ export async function categorizeTransactions(
     transactions: Array<{ description: string; amount: number }>,
     availableCategories: string[]
 ): Promise<Array<{ description: string; category: string; confidence: number }>> {
+    if (!process.env.GEMINI_API_KEY) {
+        return transactions.map((t) => ({
+            description: t.description,
+            category: 'Outras Despesas',
+            confidence: 0.5,
+        }))
+    }
+    const ai = getAIClient()
     const prompt = `
 Categorize each transaction into one of these categories: ${availableCategories.join(', ')}.
 Return a JSON array with exactly ${transactions.length} objects, each with:

@@ -38,6 +38,8 @@
   ],
   "exclude": [
     "node_modules",
+    "disabled_features",
+    ".backup_removals",
     "capacitor.config.ts",
     "vitest.config.ts"
   ]

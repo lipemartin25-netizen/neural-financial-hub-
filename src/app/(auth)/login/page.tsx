@@ -5,7 +5,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { Loader2, Mail, Lock, Eye, EyeOff, ArrowRight, Github, Chrome } from 'lucide-react'
-import { createBrowserClient } from '@supabase/ssr'
+import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 const C = {
     bg: '#0b0d10', card: '#12151a', gold: '#c9a858', goldGrad: 'linear-gradient(135deg, #c9a858, #9a7d3a)',
@@ -29,10 +29,7 @@ export default function LoginPage() {
     const [loading, setLoading] = useState(false)
     const [mode, setMode] = useState<'login' | 'forgot'>('login')
     const [resetSent, setResetSent] = useState(false)
-    const supabase = createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
+    const supabase = createClient()
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault()
         if (!email || !password) { toast.error('Preencha todos os campos'); return }

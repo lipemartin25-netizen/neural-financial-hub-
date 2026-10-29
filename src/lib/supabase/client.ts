@@ -1,8 +1,13 @@
-﻿import { createBrowserClient } from '@supabase/ssr'
+import { createBrowserClient } from '@supabase/ssr'
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://dummy.supabase.co'
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'dummy-anon-key'
 
 export function createClient() {
-  return createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
+  return createBrowserClient(supabaseUrl, supabaseAnonKey)
 }
+
+/**
+ * Instância singleton compartilhada no cliente (SSR compatível com cookies)
+ */
+export const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey)

@@ -6,11 +6,12 @@ import Stripe from 'stripe'
 // Forçar rota dinâmica
 export const dynamic = 'force-dynamic'
 
-// Admin client para webhook (sem auth do user)
-const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+function getSupabaseAdmin() {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+    if (!url || !key) return null
+    return createClient(url, key)
+}
 
 export async function POST(request: NextRequest) {
     const body = await request.text()
@@ -25,6 +26,11 @@ export async function POST(request: NextRequest) {
         event = stripe.webhooks.constructEvent(body, sig, process.env.STRIPE_WEBHOOK_SECRET)
     } catch {
         return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
+    }
+
+    const supabaseAdmin = getSupabaseAdmin()
+    if (!supabaseAdmin) {
+        return NextResponse.json({ error: 'Supabase credentials not configured' }, { status: 500 })
     }
 
     try {
