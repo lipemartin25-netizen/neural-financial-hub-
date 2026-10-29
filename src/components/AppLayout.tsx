@@ -125,7 +125,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                         const active = pathname === item.href
                         const Icon = item.icon
                         return (
-                            <Link key={item.href} href={item.href} title={!showLabel ? t(item.key) : undefined}
+                            <Link key={item.href} href={item.href} prefetch={true} title={!showLabel ? t(item.key) : undefined}
                                 style={{
                                     display: 'flex', alignItems: 'center', gap: 12,
                                     padding: showLabel ? '10px 12px' : '10px 0',
