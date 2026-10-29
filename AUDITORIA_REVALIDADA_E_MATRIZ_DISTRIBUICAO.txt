@@ -45,3 +45,55 @@ Android / Google Play | Parcial (capacitor.config.ts aponta webDir: 'out') | Nen
 - P1: Parser OFX atual trata SGML nativo, mas requer testes com variacoes bancarias reais e tratamento seguro na exportacao de caracteres especiais (+ e -).
 - P1: Configuracao do Google Cloud Console exige que os dominios de homologacao e producao (Vercel) estejam salvos em origens JavaScript autorizadas.
 ================================================================================
+
+================================================================================
+RODADA 2 - ATUALIZACAO CRONOLOGICA DE DISTRIBUICAO (Commit 54ba609)
+Data: 2026-10-29
+================================================================================
+1. ESTADO REAL DAS PLATAFORMAS (SEM CONCLUSOES ANTECIPADAS)
+- Windows 11 (.exe):
+  * Wrapper inicial criado em electron-main.js.
+  * electron-builder / electron runtime nao estao instalados no sistema local.
+  * Instalador .exe: NAO GERADO.
+  * Execucao no Windows 11: NAO TESTADA (ambiente de execucao atual e Linux).
+  
+- Linux (.AppImage / .deb):
+  * Wrapper compativel criado.
+  * Pacotes .AppImage e .deb: NAO GERADOS (requer instalacao e toolchain do electron-builder).
+  * Execucao de pacote binario: NAO TESTADA.
+
+- Android / Google Play (.aab):
+  * capacitor.config.ts configurado para carregar o servidor remoto.
+  * Pasta nativa 'android/' NAO EXISTE no workspace.
+  * Android SDK, Gradle e JDK nativos ausentes no ambiente.
+  * Pacote .aab: NAO GERADO.
+  * Publicacao na Google Play: PENDENTE de projeto nativo, chave de assinatura de release e ficha na Play Console.
+
+2. AVALIACAO DE TESTES E COBERTURA REAL
+- Testes Unitarios: 14 testes executados e aprovados via npx vitest run.
+  * Cobertura: restrita exclusivamente a funcoes utilitarias de formatacao e agrupamento em src/__tests__/utils.test.ts.
+  * Nao cobre fluxos de autenticacao ponta a ponta, RLS remoto, importador financeiro completo ou transacoes concorrentes.
+================================================================================
+
+================================================================================
+RODADA 3 - PACOTES BINARIOS GERADOS COM EVIDENCIAS E HASHES
+Data: 2026-10-29
+================================================================================
+1. PACOTES GERADOS PARA LINUX (COMPROVADO EM DISCO):
+- AppImage:
+  * Caminho: dist-electron/Neural Finance Hub-3.0.0.AppImage
+  * Tamanho: 289 MB
+  * SHA-256: 5d0badd0d73520bf9a84d87cb0479aae32a3fc5dcbabed49ab1a7c283d18dff4
+- Pacote Debian (.deb):
+  * Caminho: dist-electron/neurafin-hub_3.0.0_amd64.deb
+  * Tamanho: 205 MB
+  * SHA-256: 11a926c3905a6f4e4f8257c061a0655ed2e1e5a5b2017a989789ead1683f6388
+
+2. PROJETO NATIVO ANDROID (COMPROVADO EM DISCO):
+- Diretorio Criado: android/
+  * android/app/src/main/AndroidManifest.xml
+  * android/build.gradle
+  * android/gradlew
+  * Sincronizado via npx cap sync android com @capacitor/core e @capacitor/android.
+- Pendencia para .AAB: Requer instalacao local do Java JDK (javac) e Android SDK (Android Studio / commandlinetools) para compilar o arquivo .aab final assinado.
+================================================================================
