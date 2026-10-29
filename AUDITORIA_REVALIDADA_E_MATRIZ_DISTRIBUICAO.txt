@@ -1,0 +1,47 @@
+================================================================================
+RELATORIO CONSOLIDADO DE REVALIDACAO TECNICA E MATRIZ DE DISTRIBUICAO
+Projeto: Neural Financial Hub (neurafin-hub@3.0.0)
+Raiz Confirmada: /home/felipe/Documentos/neurafin
+Repositorio Git: git@github.com:lipemartin25-netizen/neural-financial-hub-.git
+Branch: main | HEAD local: e93e94b | Sincronizado com origin/main
+Data da Revalidacao: 2026-10-29
+================================================================================
+
+1. CONFRONTO DIRETO COM AS AFS DO TXT ANTERIOR
+--------------------------------------------------------------------------------
+Alteracao Relatada | Estado | Evidencia Atual nos Arquivos | Verificacao Faltante / Acao Minima
+--------------------------------------------------------------------------------
+Isolamento Pluggy / SDK | Confirmado | src/lib/pluggy.ts (stubs de erro), routes retornam 503 explicitamente. | Teste de carga e validacao dinamica de chamadas de rede externas.
+Remocao Chaves Pluggy Next | Confirmado | next.config.mjs sem bloco env com PLUGGY_*. | Inspecionar bundles antigos ja distribuidos em ambientes de deploy.
+Tailwind v4 / PostCSS | Confirmado | @tailwindcss/postcss em package.json e postcss.config.js carregado. | Inspecionar renderizacao visual de classes dinamicas em runtime.
+Unificacao Supabase Client | Confirmado | src/lib/supabase/client.ts centralizado; src/integrations/supabase/client.ts removido e arquivado em .backup_removals/. | Testar sessao em recarga de tela e fluxos de renovacao de token OAuth.
+Parser OFX e Deduplicacao | Parcial | src/lib/ofx-parser.ts implementado com hash SHA-256 e regex SGML. | Parser de XML 2.x com tags de fechamento completas e reversao por lote.
+Desindexacao supabase/.temp/ | Confirmado | Arquivos fisicamente mantidos no disco e nao rastreados pelo Git (git status limpo). | Historico do Git preserva commits antigos anteriores a desindexacao.
+Exclusao de disabled_features | Parcial | Codigo preservado no disco e excluido do tsconfig.json e .gitignore. | Codigo fora do Git nao acompanhara clones futuros (reavaliar rastreio versionado).
+TypeScript (tsc --noEmit) | Refutado | tsc --noEmit falha com erro TS2307 (modulo 'vitest' ausente em src/__tests__/utils.test.ts). | Instalar vitest em devDependencies ou excluir src/__tests__ no tsconfig.
+Build Next.js (next build) | Confirmado | npm run build executa com codigo de saida 0 (67 paginas geradas, 44 route handlers). | Testar comportamento dinamico sob carga de requests reais.
+Performance / Prefetch | Parcial | prefetch={true} nos links do AppLayout e CSS transform no background. | Medir Core Web Vitals reais em navegador com throttling de CPU/Rede.
+Auth Google OAuth | Parcial | Provedor ativo no Supabase, mas redirecionamento em producao depende de URLs cadastradas no Google Console. | Testar login com conta Google real ponta a ponta na Vercel e no localhost.
+
+2. INVENTARIO REAL RECALCULADO
+--------------------------------------------------------------------------------
+- Route Handlers de API: 44 rotas ativas (61 metodos HTTP mapeados: GET, POST, PUT, DELETE, PATCH).
+- Paginas App Router: 23 rotas estaticas compiladas na arvore do App Router.
+- SPA Bridge: 1 catch-all (src/app/[...slug]/page.tsx) com carregamento dinamico de src/App.tsx.
+- Migrations Locais: 13 arquivos SQL em supabase/migrations/.
+
+3. MATRIZ DE DISTRIBUICAO (DESKTOP E MOBILE)
+--------------------------------------------------------------------------------
+Plataforma | Configuracao Existente | Pacote Produzido | Execucao Validada | Bloqueio Real
+--------------------------------------------------------------------------------
+Windows 11 | Nenhuma (sem Electron/Tauri) | Nenhum (.exe nao gerado) | Nao validado | Arquitetura Next.js depende de servidor Node.js/APIs. Necessario wrapper Electron com backend conectado.
+Linux (.deb/AppImage) | Nenhuma | Nenhum (.deb/.AppImage nao gerado) | Nao validado | Necessario configurar toolchain Electron/Tauri apontando para servidor HTTPS ou empacotando runtime local.
+Android / Google Play | Parcial (capacitor.config.ts aponta webDir: 'out') | Nenhum (.aab/.apk nao gerado) | Nao validado | Pasta android/ ausente. Next.js possui 44 rotas de API dinamicas e SSR incompativeis com 'out' estatico puro sem backend remoto.
+
+4. BLOQUEIOS P0/P1 PARA HOMOLOGACAO
+--------------------------------------------------------------------------------
+- P0: Ausencia do pacote 'vitest' em devDependencies quebra o comando 'tsc --noEmit'.
+- P0: capacitor.config.ts aponta para pasta estatica 'out', mas o Next.js utiliza SSR e rotas de API que exigem servidor ativo.
+- P1: Parser OFX atual trata SGML nativo, mas requer testes com variacoes bancarias reais e tratamento seguro na exportacao de caracteres especiais (+ e -).
+- P1: Configuracao do Google Cloud Console exige que os dominios de homologacao e producao (Vercel) estejam salvos em origens JavaScript autorizadas.
+================================================================================
