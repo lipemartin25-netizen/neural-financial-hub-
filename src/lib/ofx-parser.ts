@@ -10,14 +10,17 @@ export type ParsedTransaction = {
 }
 
 /**
- * Sanitiza descrições para evitar ataques de Injeção de Fórmulas em CSV/Excel (=, +, -, @)
+ * Limpa aspas envolventes e espaços sem alterar o texto original no banco
+ */
+export function cleanDescription(desc: string): string {
+    return desc.replace(/^["']|["']$/g, '').trim()
+}
+
+/**
+ * Função mantida para retrocompatibilidade
  */
 export function sanitizeDescription(desc: string): string {
-    const clean = desc.replace(/^["']|["']$/g, '').trim()
-    if (/^[=+\-@]/.test(clean)) {
-        return `'${clean}`
-    }
-    return clean
+    return cleanDescription(desc)
 }
 
 /**

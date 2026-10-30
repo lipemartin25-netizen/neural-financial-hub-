@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@/lib/supabase/server'
+import { apiLimiter, withRateLimit } from '@/lib/rate-limit'
 
 type Quote = {
     ticker: string; price: number; change: number; changePct: number
@@ -7,6 +9,15 @@ type Quote = {
 
 export async function GET(request: NextRequest) {
     try {
+        // Rate limit por IP (30 req/min)
+        const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
+        const rateLimitResponse = withRateLimit(ip)
+        if (rateLimitResponse) return rateLimitResponse
+
+        const supabase = await createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
         const { searchParams } = new URL(request.url)
         const tickers = searchParams.get('tickers')
 

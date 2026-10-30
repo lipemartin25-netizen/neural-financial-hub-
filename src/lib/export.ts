@@ -1,11 +1,22 @@
 import { fmt } from '@/lib/theme'
 
 // ========== CSV Export ==========
+/**
+ * Sanitiza células de exportação CSV para prevenir Formula Injection no Excel/LibreOffice (=, +, -, @)
+ */
+export function sanitizeCSVCell(cell: string): string {
+  const str = String(cell).trim()
+  if (/^[=+\-@]/.test(str)) {
+    return `'${str}`
+  }
+  return str
+}
+
 export function downloadCSV(filename: string, headers: string[], rows: string[][]) {
   const BOM = '\uFEFF' // UTF-8 BOM para Excel BR
   const csv = BOM + [
-    headers.join(';'),
-    ...rows.map(r => r.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(';')),
+    headers.map(h => `"${sanitizeCSVCell(h).replace(/"/g, '""')}"`).join(';'),
+    ...rows.map(r => r.map(cell => `"${sanitizeCSVCell(cell).replace(/"/g, '""')}"`).join(';')),
   ].join('\n')
 
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })

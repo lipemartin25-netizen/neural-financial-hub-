@@ -2,7 +2,6 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { createWorker } from 'tesseract.js'
 import { Upload, FileText, Loader2, CheckCircle2, AlertTriangle, X } from 'lucide-react'
 import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -34,6 +33,8 @@ export default function BoletoOCRUpload({ onDadosExtraidos }: Props) {
         reader.readAsDataURL(file)
 
         try {
+            // Dynamic import: tesseract.js (~14MB worker) carregado apenas quando necessário
+            const { createWorker } = await import('tesseract.js')
             const worker = await createWorker('por', 1, {
                 logger: m => {
                     if (m.status === 'recognizing text') {

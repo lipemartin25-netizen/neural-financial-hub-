@@ -5,9 +5,8 @@ const config: CapacitorConfig = {
     appName: 'NeuraFin Hub',
     webDir: 'public',
     server: {
-        // Aponta para o backend de produção Vercel ou IP local para desenvolvimento
         url: process.env.CAPACITOR_SERVER_URL || 'https://neurafin-hub.vercel.app',
-        cleartext: true
+        cleartext: process.env.NODE_ENV === 'development'
     }
 };
 

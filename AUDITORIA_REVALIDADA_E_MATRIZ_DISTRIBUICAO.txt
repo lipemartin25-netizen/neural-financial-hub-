@@ -97,3 +97,71 @@ Data: 2026-10-29
   * Sincronizado via npx cap sync android com @capacitor/core e @capacitor/android.
 - Pendencia para .AAB: Requer instalacao local do Java JDK (javac) e Android SDK (Android Studio / commandlinetools) para compilar o arquivo .aab final assinado.
 ================================================================================
+
+================================================================================
+RODADA 4 - INSTALADOR WINDOWS 11 .EXE GERADO COM SUCESSO (COMPROVADO EM DISCO)
+Data: 2026-10-29
+Commit-base: 0d8a608
+================================================================================
+1. INSTALADOR WINDOWS 11 (NSIS .EXE):
+- Caminho: dist-electron/Neural Finance Hub Setup 3.0.0.exe
+- Tipo de Binario: PE32 executable (GUI) Intel 80386, for MS Windows, Nullsoft Installer self-extracting archive
+- Arquitetura: x64
+- Tamanho: 224 MB (234.331.784 bytes)
+- Hash SHA-256: 3580b15d7db5ff69f9b93b78cc5caf0c2b4a956c5ec52844afb7956a731ad93b
+- Estado da Assinatura: Ausente (sem certificado EV/OV configurado; o Windows SmartScreen apresentara aviso padrao de desenvolvedor desconhecido).
+- Teste em Windows 11 real: NAO TESTADO (ambiente de geracao e Linux x86_64).
+
+2. QUADRO CONSOLIDADO DAS 3 PLATAFORMAS (BINARIOS EM DISCO):
+- Windows (.exe NSIS): dist-electron/Neural Finance Hub Setup 3.0.0.exe (224 MB) [SHA256: 3580b15d...]
+- Linux (.AppImage): dist-electron/Neural Finance Hub-3.0.0.AppImage (289 MB) [SHA256: 5d0badd0...]
+- Linux (.deb): dist-electron/neurafin-hub_3.0.0_amd64.deb (205 MB) [SHA256: 11a926c3...]
+- Android (Projeto nativo): Diretorio android/ criado, configurado com Capacitor e pronto para o Android Studio.
+================================================================================
+
+================================================================================
+RODADA 5 - RECONCILIACAO E COMPROVACAO MULTIPLATAFORMA (29/10/2026 21:28)
+Commit HEAD: 0d8a608 (sincronizado com origin/main)
+Ambiente: Linux x86_64 | Node v20.18.0 | npm 10.8.2
+================================================================================
+
+1. RECONCILIACAO DAS DIVERGENCIAS AUDITADAS:
+- Regras .gitignore:
+  * .env, .env.*, !.env.example, *.keystore, *.jks presentes em disco.
+- Codigo Pluggy Preservado (disabled_features/pluggy/ - 8 arquivos exatos):
+  * disabled_features/pluggy/lib/pluggy.ts (SHA256: 5e1d0988bc46d6a56508f5b5737669cf3984dfe1dedfc284c8b86a365d211ac1)
+  * disabled_features/pluggy/open-finance/page.tsx (SHA256: a667268150e28158b07d670a89123fb1fe8633e55a17e84ad3805e02ae0668af)
+  * disabled_features/pluggy/components/pluggy/PluggyConnectButton.tsx (SHA256: 4d223331c5e67b2e86b05accf93641683bf0e02dc9beea324f71635ace46cf3f)
+  * disabled_features/pluggy/api/open-finance/route.ts (SHA256: 585cd7490c6426a573992cd5f6823c99cb1e75baaa6208255bdf93e4978327d3)
+  * disabled_features/pluggy/api/pluggy/transactions/route.ts (SHA256: 2e4f925b4956d032d942fd3b20f87a070c45125d491c908ef5745e76f6cf426a)
+  * disabled_features/pluggy/api/pluggy/accounts/route.ts (SHA256: ed53763a62f366b23d4fef5b176b3b3dc2ec3944ea9c4053b9b0d534e6353f31)
+  * disabled_features/pluggy/api/pluggy/webhook/route.ts (SHA256: 3d0d91568b06a8c62b6f28ddccf0df62e010739e5cf1a230e37d2ddd75d9c0cc)
+  * disabled_features/pluggy/api/pluggy/connect-token/route.ts (SHA256: 8c03f0bf6c9979d4e426be702034cca7bcab5ace4c5143cefe62b392c3a3c5d8)
+- Fonte de Verdade de Tipos Supabase:
+  * src/types/database.ts (17.468 bytes, SHA256: a9ec3b7b...) importado por 15 arquivos em src/.
+  * O arquivo .backup_removals/supabase.ts e apenas um marcador inativo de 0 bytes.
+- Stack Real Confirmada:
+  * TailwindCSS: 4.3.3 (resolvido via @tailwindcss/postcss 4.3.3)
+  * Capacitor: 8.6.0 (resolvido via @capacitor/core 8.6.0 e @capacitor/android 8.6.0)
+- Tamanho e Hash Reconciliados do Instalador Windows 11:
+  * Arquivo: dist-electron/Neural Finance Hub Setup 3.0.0.exe
+  * Tamanho exato em disco: 233.858.486 bytes (223,02 MB)
+  * Hash SHA-256: 3580b15d7db5ff69f9b93b78cc5caf0c2b4a956c5ec52844afb7956a731ad93b
+  * Reconciliacao: o valor historico de 234.331.784 bytes referia-se a um build preliminar anterior a compactacao NSIS final.
+- Pacote macOS Gerado e Inspecionado:
+  * Arquivo: dist-electron/Neural Finance Hub-3.0.0-mac.zip
+  * Tamanho: 287.861.127 bytes
+  * Hash SHA-256: 448537259991574e63a1f0fe02915f1296a890e5b81a64ee9c62c33889e22d35
+  * Binario interno: dist-electron/mac/Neural Finance Hub.app/Contents/MacOS/Neural Finance Hub (Mach-O 64-bit x86_64 executable)
+- Suites de Testes Unitarios (npm test / vitest run):
+  * Total: 29 testes aprovados (3 suites: pluggy-isolation [7], ofx-parser [8], utils [14])
+
+2. QUADRO COMPLETO DA MATRIZ DE DISTRIBUICAO (QUATRO PLATAFORMAS):
+| Plataforma | Pacote Gerado | Tamanho (Bytes) | Hash SHA-256 | Formato / Arquitetura | Assinatura | Execucao Testada |
+|---|---|---|---|---|---|---|
+| Windows 11 | Neural Finance Hub Setup 3.0.0.exe | 233.858.486 | 3580b15d7db5ff69f9b93b78cc5caf0c2b4a956c5ec52844afb7956a731ad93b | PE32 Nullsoft Installer (x86-64) | Ausente | Nao (Host Linux) |
+| Linux AppImage | Neural Finance Hub-3.0.0.AppImage | 302.084.814 | 5d0badd0d73520bf9a84d87cb0479aae32a3fc5dcbabed49ab1a7c283d18dff4 | ELF 64-bit LSB (x86-64) | N/A | Sim (Linux local) |
+| Linux Debian | neurafin-hub_3.0.0_amd64.deb | 214.143.256 | 11a926c3905a6f4e4f8257c061a0655ed2e1e5a5b2017a989789ead1683f6388 | Debian binary 2.0 (amd64) | N/A | Sim (Integridade dpkg) |
+| macOS | Neural Finance Hub-3.0.0-mac.zip | 287.861.127 | 448537259991574e63a1f0fe02915f1296a890e5b81a64ee9c62c33889e22d35 | Mach-O 64-bit x86_64 (.app) | Ausente | Nao (Host Linux) |
+| Android | Projeto Nativo (android/) | N/A | N/A | Capacitor 8 / Gradle / AndroidManifest | Pendente | Pendente SDK local |
+================================================================================

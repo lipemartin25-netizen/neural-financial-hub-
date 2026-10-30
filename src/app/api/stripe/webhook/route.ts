@@ -33,6 +33,24 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Supabase credentials not configured' }, { status: 500 })
     }
 
+    // Idempotência: verificar se este evento já foi processado
+    const { data: existing } = await supabaseAdmin
+        .from('stripe_webhook_events')
+        .select('id')
+        .eq('event_id', event.id)
+        .maybeSingle()
+
+    if (existing) {
+        return NextResponse.json({ received: true, duplicate: true })
+    }
+
+    // Registrar evento antes de processar (fail-safe)
+    await supabaseAdmin.from('stripe_webhook_events').insert({
+        event_id: event.id,
+        event_type: event.type,
+        processed_at: new Date().toISOString(),
+    })
+
     try {
         switch (event.type) {
             case 'checkout.session.completed': {

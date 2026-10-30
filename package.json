@@ -7,8 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "test": "vitest run",
     "dist:linux": "electron-builder --linux AppImage deb",
-    "dist:win": "electron-builder --win nsis"
+    "dist:win": "electron-builder --win nsis",
+    "dist:mac": "electron-builder --mac zip"
   },
   "dependencies": {
     "@capacitor/core": "^8.6.0",
@@ -42,7 +44,6 @@
     "react-hook-form": "^7.71.2",
     "react-is": "^19.3.1",
     "react-pluggy-connect": "^2.12.0",
-    "react-router-dom": "^7.13.1",
     "recharts": "^3.7.0",
     "sonner": "^2.0.7",
     "stripe": "^20.4.0",
@@ -91,6 +92,12 @@
       "target": [
         "nsis"
       ]
+    },
+    "mac": {
+      "target": [
+        "zip"
+      ],
+      "category": "public.app-category.finance"
     }
   },
   "author": {

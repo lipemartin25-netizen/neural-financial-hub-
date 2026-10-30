@@ -1,6 +1,11 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { parseOFX, sanitizeDescription, calculateTransactionHash } from '@/lib/ofx-parser'
+import { withRateLimit } from '@/lib/rate-limit'
+
+// Lock em memória para evitar importações concorrentes por usuário
+const importLocks = new Map<string, number>()
+const LOCK_TTL = 120_000 // 2 min max
 
 type ParsedRow = {
     date: string
@@ -109,10 +114,28 @@ function detectType(amount: number, rawAmount: string, typeCol: string | undefin
 }
 
 export async function POST(request: NextRequest) {
+    let lockKey: string | null = null
     try {
         const supabase = await createClient()
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+        // Rate limit: 10 importações/min por IP
+        const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
+        const rateLimitResponse = withRateLimit(ip)
+        if (rateLimitResponse) return rateLimitResponse
+
+        // Proteção contra importação concorrente
+        lockKey = `import:${user.id}`
+        const existingLock = importLocks.get(lockKey)
+        if (existingLock && Date.now() - existingLock < LOCK_TTL) {
+            lockKey = null // Não limpar lock se não o adquirimos
+            return NextResponse.json(
+                { error: 'Uma importação já está em andamento. Aguarde a conclusão.' },
+                { status: 409 }
+            )
+        }
+        importLocks.set(lockKey, Date.now())
 
         const formData = await request.formData()
         const file = formData.get('file') as File
@@ -120,6 +143,11 @@ export async function POST(request: NextRequest) {
 
         if (!file || !accountId) {
             return NextResponse.json({ error: 'Arquivo e conta são obrigatórios' }, { status: 400 })
+        }
+
+        const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
+        if (file.size > MAX_FILE_SIZE) {
+            return NextResponse.json({ error: 'Arquivo excede o limite máximo permitido de 5MB' }, { status: 413 })
         }
 
         const { data: account } = await supabase
@@ -229,9 +257,13 @@ export async function POST(request: NextRequest) {
         }
 
         if (toInsert.length > 0) {
-            const { error: insertError } = await supabase.from('transactions').insert(toInsert)
-            if (insertError) {
-                return NextResponse.json({ error: insertError.message }, { status: 500 })
+            const BATCH_SIZE = 200
+            for (let i = 0; i < toInsert.length; i += BATCH_SIZE) {
+                const batch = toInsert.slice(i, i + BATCH_SIZE)
+                const { error: insertError } = await supabase.from('transactions').insert(batch)
+                if (insertError) {
+                    return NextResponse.json({ error: insertError.message }, { status: 500 })
+                }
             }
         }
 
@@ -249,5 +281,7 @@ export async function POST(request: NextRequest) {
     } catch (err: unknown) {
         const message = err instanceof Error ? err.message : 'Internal error'
         return NextResponse.json({ error: message }, { status: 500 })
+    } finally {
+        if (lockKey) importLocks.delete(lockKey)
     }
 }

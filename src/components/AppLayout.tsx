@@ -62,7 +62,17 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     useEffect(() => { setMobileOpen(false) }, [pathname])
 
     const handleLogout = async () => {
-        try { await fetch('/api/auth/logout', { method: 'POST' }) } catch { }
+        try {
+            if (typeof window !== 'undefined' && 'serviceWorker' in navigator && navigator.serviceWorker.controller) {
+                await new Promise<void>((resolve) => {
+                    const channel = new MessageChannel()
+                    channel.port1.onmessage = () => resolve()
+                    navigator.serviceWorker.controller?.postMessage({ action: 'CLEAR_AUTH_CACHE' }, [channel.port2])
+                    setTimeout(resolve, 250) // fallback de timeout seguro
+                })
+            }
+            await fetch('/api/auth/logout', { method: 'POST' })
+        } catch { }
         router.push('/login')
     }
 

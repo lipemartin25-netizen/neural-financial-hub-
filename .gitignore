@@ -1,3 +1,8 @@
+# Relatórios de auditoria gerados localmente
+AUDITORIA_COMPLETA_NEURAFIN.txt
+PROJETO_COMPLETO_AUDITORIA_EXTERNA.txt
+PROJETO_COMPLETO_NEURAFIN.txt
+
 # dependencies
 /node_modules
 /.pnp
@@ -17,11 +22,17 @@ yarn-debug.log*
 yarn-error.log*
 # env files (NUNCA commitar!)
 .env
+.env.*
+!.env.example
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
 .env*.local
+
+# android keystores & certificates
+*.keystore
+*.jks
 # vercel
 .vercel
 # typescript
